@@ -131,4 +131,5 @@ systemctl --user enable --now job-reply-monitor.service
 | Additional Direct Additions | 101–105 | 5 | Targeted High-LPA Roles |
 | Funded AI & Tech Startups | 106–155 | 50 | LLM, GenAI, MLOps, Backend |
 | Joining Goodies & High Perks | 156–205 | 50 | MacBooks, Devices, Top Perks |
-| **Total** | | **205** | **Target CTC: ₹12–15 LPA** |
+| Hybrid Bangalore (real postings, **To Apply**) | 206–255 | 50 | Found via web search Oct 2026; not yet applied |
+| **Total** | | **255** | **Target CTC: ₹12–15 LPA** |
