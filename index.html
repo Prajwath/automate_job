@@ -25,6 +25,7 @@ header p{color:var(--muted);font-size:.85rem;margin-top:.25rem}
 .stat.pos .n{color:#34d399}.stat.neg .n{color:#f87171}.stat.neu .n{color:#fbbf24}.stat.all .n{color:#60a5fa}.stat.rate .n{color:#c084fc}
 .panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-bottom:1.25rem}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem}
+.panel[hidden]{display:none}
 .panel h2{font-size:.95rem;margin-bottom:.8rem}
 .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--bg)}
 .bar span{display:block;height:100%}
@@ -71,15 +72,15 @@ a{color:#60a5fa;text-decoration:none}
 <div class="container">
 <header>
  <div><h1>Job Application Tracker</h1><p id="sub">Loading…</p></div>
- <div style="display:flex;gap:.5rem"><button class="btn ghost" onclick="exportCSV()">Export CSV</button><button class="btn" onclick="load()">Refresh</button></div>
+ <div style="display:flex;gap:.5rem"><button class="btn ghost" id="alertbtn" onclick="enableAlerts()">🔔 Alerts</button><button class="btn ghost" onclick="exportCSV()">Export CSV</button><button class="btn" onclick="load()">Refresh</button></div>
 </header>
 
 <section class="stats" id="stats"></section>
 
 <section class="panels">
  <div class="panel"><h2>Reply sentiment</h2><div class="bar" id="sentbar"></div><div class="legend" id="sentlegend"></div></div>
- <div class="panel"><h2>By batch</h2><div id="cohorts"></div></div>
- <div class="panel"><h2>By channel</h2><div id="channels"></div></div>
+ <div class="panel analysis" hidden><h2>By batch</h2><div id="cohorts"></div></div>
+ <div class="panel analysis" hidden><h2>By channel</h2><div id="channels"></div></div>
 </section>
 
 <section class="card">
@@ -156,7 +157,7 @@ async function load(){
   fill($('fstatus'),'All statuses',data.map(d=>d.Status));
   fill($('fcohort'),'All batches',data.map(d=>d._c));
   fill($('fchannel'),'All channels',data.map(d=>d.Channel));
-  render();
+  render(); checkNewPositives(); updateAlertBtn();
 }
 
 function tally(list){ const t={pos:0,neg:0,neu:0,none:0}; list.forEach(d=>t[sentiment(d)]++); return t; }
@@ -207,6 +208,24 @@ function exportCSV(){
   const cols=['Application_ID','Company','Job_Title','Channel','Status','Response_Date','Notes'];
   const out=[cols.concat('Reply_Type').join(',')].concat(visible().map(d=>cols.map(c=>'"'+String(d[c]||'').replace(/"/g,'""')+'"').concat(SENT[sentiment(d)].label).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([out.join('\n')],{type:'text/csv'})); a.download='applications_filtered.csv'; a.click();
+}
+
+// Show the By batch / By channel analysis panels with ?analysis=1 (data is always computed)
+if(new URLSearchParams(location.search).has('analysis')) document.querySelectorAll('.analysis').forEach(e=>e.hidden=false);
+
+// Browser alerts for new positive replies (works while the page is open; first load only records a baseline)
+function updateAlertBtn(){ const b=$('alertbtn'); if(!('Notification' in window)){b.style.display='none';return;} b.textContent=Notification.permission==='granted'?'🔔 Alerts on':'🔔 Alerts'; }
+function enableAlerts(){ if(!('Notification' in window)) return; Notification.requestPermission().then(()=>{updateAlertBtn();checkNewPositives(true);}); }
+function checkNewPositives(){
+  let seen=null; try{ seen=JSON.parse(localStorage.getItem('seenPositive')); }catch(e){}
+  const now=data.filter(d=>sentiment(d)==='pos'), ids=now.map(d=>d.Application_ID);
+  if(seen){
+    const fresh=now.filter(d=>!seen.includes(d.Application_ID));
+    if(fresh.length && 'Notification' in window && Notification.permission==='granted'){
+      fresh.forEach(d=>new Notification('🎉 Positive reply: '+d.Company,{body:(d.Status||'')+' — '+(d.Job_Title||''),tag:'pos-'+d.Application_ID}));
+    }
+  }
+  try{ localStorage.setItem('seenPositive',JSON.stringify(ids)); }catch(e){}
 }
 
 ['q','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',renderTable));

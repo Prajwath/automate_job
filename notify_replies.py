@@ -18,6 +18,7 @@ import imaplib
 import email
 import json
 import subprocess
+import urllib.request
 import time
 import signal
 from email.header import decode_header
@@ -129,6 +130,23 @@ def send_desktop_notification(title, body, urgency="critical"):
         log(f"🔔 Desktop notification sent: {title}")
     except Exception as e:
         log(f"⚠️  Failed to send desktop notification: {e}")
+
+
+def send_phone_push(title, body):
+    """Optional phone push via ntfy.sh. Enabled only when NTFY_TOPIC is set in .env."""
+    topic = get_env_var("NTFY_TOPIC")
+    if not topic:
+        return
+    try:
+        req = urllib.request.Request(
+            f"https://ntfy.sh/{topic}",
+            data=body.encode("utf-8"),
+            headers={"Title": title.encode("utf-8").decode("latin-1", "ignore"), "Priority": "high", "Tags": "tada"},
+        )
+        urllib.request.urlopen(req, timeout=10)
+        log(f"📱 Phone push sent: {title}")
+    except Exception as e:
+        log(f"⚠️  Failed to send phone push: {e}")
 
 
 def play_sound():
@@ -349,6 +367,10 @@ def scan_inbox(dry_run=False):
                             f"Subject: {subject[:60]}\n"
                             f"From: {sender[:50]}",
                             urgency="critical"
+                        )
+                        send_phone_push(
+                            f"Positive reply: {app_row['Company']}",
+                            f"{note_text}\nRole: {app_row['Job_Title']}\nSubject: {subject[:60]}"
                         )
                         play_sound()
 
