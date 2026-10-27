@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prajwath Gowda — Job Application & Outreach Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --border: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title-group h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-group p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .profile-badge span {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .number {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        .stat-card.blue .number { color: #60a5fa; }
+        .stat-card.green .number { color: #34d399; }
+        .stat-card.purple .number { color: #c084fc; }
+        .stat-card.amber .number { color: #fbbf24; }
+
+        .stat-card .subtext {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .content-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        input[type="text"] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-applied { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-reverted { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-interview { background: rgba(139, 92, 246, 0.2); color: #c084fc; }
+        .badge-rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-secondary);
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="title-group">
+                <h1>Career Operations & Application Tracker</h1>
+                <p>Tracking applications, outreach, and company responses for Prajwath Gowda</p>
+            </div>
+            <div class="profile-badge">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
+                <span>prajwathg@gmail.com</span>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <h3>Total Applied</h3>
+                <div class="number" id="total-applied">0</div>
+                <div class="subtext">Across all platforms & email</div>
+            </div>
+            <div class="stat-card green">
+                <h3>Companies Reverted</h3>
+                <div class="number" id="total-reverted">0</div>
+                <div class="subtext">Responses & follow-ups received</div>
+            </div>
+            <div class="stat-card purple">
+                <h3>Interviews / Next Round</h3>
+                <div class="number" id="total-interviews">0</div>
+                <div class="subtext">Active screening & rounds</div>
+            </div>
+            <div class="stat-card amber">
+                <h3>Revert Rate</h3>
+                <div class="number" id="revert-rate">0%</div>
+                <div class="subtext">Response conversion ratio</div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="card-header">
+                <h2>Application Log</h2>
+                <div class="actions">
+                    <input type="text" id="search-input" placeholder="Search company or role..." onkeyup="filterTable()">
+                    <button class="btn" onclick="fetchData()">Refresh</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="applications-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date Applied</th>
+                            <th>Company</th>
+                            <th>Role</th>
+                            <th>Location</th>
+                            <th>Target CTC</th>
+                            <th>Channel</th>
+                            <th>Status</th>
+                            <th>Reverted?</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <p>No job applications logged yet. The automation pipeline will populate this live.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+
+                const EMBEDDED_CSV = `Application_ID,Company,Job_Title,Location,Target_CTC,Job_URL,Date_Applied,Channel,Sender_Email,Status,Reverted_Back,Response_Date,Notes
+1,Anthropic,Applied AI Architect,"Bangalore, India",12 - 15 LPA,https://job-boards.greenhouse.io/anthropic/jobs/5443882008,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Direct fit: LLM fine-tuning, RAG retrieval (97.3% CAM pipeline), client enterprise delivery"
+2,Anthropic,"Applied AI Architect, Partnerships","Bangalore, India",12 - 15 LPA,https://job-boards.greenhouse.io/anthropic/jobs/5447368008,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Partner AI architectures, multi-agent workflows, banking compliance integration"
+3,Sarvam AI,AI/ML Systems Engineer (Full Stack Python),"Bangalore, India",12 - 15 LPA,https://sarvam.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Indic LLM systems, voice recognition integration, Python model training & serving"
+4,Krutrim (Ola AI),AI Engineer - LLM & Multi-Agent,"Bangalore, India",12 - 15 LPA,https://ola.krutrim.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Multi-agent conversational architectures, model fine-tuning, vector database pipelines"
+5,Level AI,Machine Learning Engineer - NLP & Speech,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/thelevelai/nlp-speech-engineer,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Direct alignment: Voice recognition, NLP pipeline design, conversational agent workflows"
+6,Neuron7.ai,Senior Forward Deployment Engineer - AI/ML,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/neuron7/fde-ai-ml,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Enterprise client deployment (like Axis Bank/SBI experience), Python microservices & FastAPI"
+7,Riveron,AI/ML Engineer - GenAI & RAG,"Bangalore, India",12 - 15 LPA,https://jobs.ashbyhq.com/riveron/ai-ml-engineer,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"RAG document retrieval, FinBERT embeddings, autonomous workflow agents"
+8,Handshake AI,Member of Technical Staff - AI Engineering,"Bangalore, India",12 - 15 LPA,https://jobs.ashbyhq.com/handshake/mts-ai,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Python data-processing pipelines, evaluation benchmarks, model inference acceleration"
+9,Korza.ai,AI Backend Engineer (Python / LLM),"Bangalore, India",12 - 15 LPA,https://jobs.ashbyhq.com/korza/ai-backend,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"LLM orchestration, agent tool-calling, Python backend services"
+10,AiPrise,Full Stack Engineer (Python & React),"Bangalore, India",12 - 15 LPA,https://jobs.ashbyhq.com/aiprise/fullstack-engineer,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,Full stack KYC/compliance system (mirrors Bank Guarantee BG document intelligence system)
+11,Yellow.ai,Lead Software Engineer - Conversational AI,"Bangalore, India",12 - 15 LPA,https://yellow.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Multi-agent conversational workflows, NLP classification, voice integration"
+12,Observe.ai,AI Systems Engineer - Contact Center LLMs,"Bangalore, India",12 - 15 LPA,https://www.observe.ai/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Voice analytics, speech-to-text, real-time agent evaluation in Python"
+13,Moveworks,Software Engineer - Enterprise Copilot,"Bangalore, India",12 - 15 LPA,https://www.moveworks.com/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Enterprise RAG, natural language reasoning, tool calling architectures"
+14,Uniphore,AI Engineer - Conversational AI & NLP,"Bangalore, India",12 - 15 LPA,https://www.uniphore.com/careers/,2026-10-27,Jobvite,prajwathg@gmail.com,Applied,No,,"Enterprise NLP, multi-modal voice AI, sentiment analysis and compliance scoring"
+15,Razorpay,Software Development Engineer - Backend / AI,"Bangalore, India",12 - 15 LPA,https://boards.greenhouse.io/razorpay,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Payment automation, high-throughput Python/REST services, banking partner integrations"
+16,CRED,Backend Developer - Python & Distributed Systems,"Bangalore, India",12 - 15 LPA,https://careers.cred.club/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Financial compliance, risk scoring, scalable microservices architecture"
+17,Groww,Full Stack Engineer (Python / Django / React),"Bangalore, India",12 - 15 LPA,https://groww.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Investment platform full stack development, relational database optimization, REST APIs"
+18,PhonePe,Software Engineer - Data & AI Platforms,"Bangalore, India",12 - 15 LPA,https://www.phonepe.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"UPI fraud detection, FinBERT document classification, high-concurrency Python pipelines"
+19,Juspay,Systems Engineer - High Concurrency Payment Systems,"Bangalore, India",12 - 15 LPA,https://juspay.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Mission-critical payment gateways, banking APIs (SBI, HDFC, Axis integrations)"
+20,slice,Backend Engineer - Core Lending & Credit,"Bangalore, India",12 - 15 LPA,https://sliceit.com/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Credit Appraisal Memo (CAM) scoring, automated underwriting and document OCR"
+21,Jupiter Money,Python Backend Developer - Banking Core,"Bangalore, India",12 - 15 LPA,https://jupiter.money/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Neobank financial accounting, bank partner integrations, microservices"
+22,Fi Money,Full Stack Engineer - Fintech Intelligence,"Bangalore, India",12 - 15 LPA,https://fi.money/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Financial insight generation, Python AI models, React frontend interfaces"
+23,Navi,Software Development Engineer - AI & Lending,"Bangalore, India",12 - 15 LPA,https://navi.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated loan approval pipelines, document OCR extraction, risk modeling"
+24,Jar,Backend Python Developer,"Bangalore, India",12 - 15 LPA,https://myjar.app/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Micro-savings platform, transaction processing, REST API architectures"
+25,INDmoney,Full Stack Developer - Wealth Management,"Bangalore, India",12 - 15 LPA,https://www.indmoney.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Portfolio tracking, automated banking document parsing, React & Python backend"
+26,Cashfree Payments,Senior Software Engineer - Disbursals & Verification,"Bangalore, India",12 - 15 LPA,https://www.cashfree.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Banking verification APIs, bank guarantee verification, scalable settlement systems"
+27,Pine Labs,Software Engineer - Enterprise Fintech Solutions,"Bangalore, India",12 - 15 LPA,https://www.pinelabs.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Merchant payment gateways, point-of-sale integrations, Python service layers"
+28,Swiggy,Software Development Engineer II - Full Stack / Backend,"Bangalore, India",12 - 15 LPA,https://www.swiggy.careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"High scale order dispatching, Python microservices, distributed caching & DBs"
+29,Zepto,Backend Engineer - Supply Chain & Catalog Intelligence,"Bangalore, India",12 - 15 LPA,https://www.zeptonow.com/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Inventory optimization, automated image OCR/catalog classification, Python/Django"
+30,Meesho,Software Engineer - AI & Search,"Bangalore, India",12 - 15 LPA,https://www.meesho.io/jobs,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Vector embedding search, recommendation reranking, full stack merchant tools"
+31,Postman,Software Engineer - API Platform,"Bangalore, India",12 - 15 LPA,https://postman.wd108.myworkdayjobs.com/careers,2026-10-27,Workday,prajwathg@gmail.com,Applied,No,,"Developer tools, REST API specifications, Python/Node test automation engines"
+32,Urban Company,Full Stack Developer - Partner Platforms,"Bangalore, India",12 - 15 LPA,https://www.urbancompany.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Workforce allocation algorithms, React Native/React web, Python API services"
+33,Zerodha,Python Systems & Backend Developer,"Bangalore, India",12 - 15 LPA,https://zerodha.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Open-source ethos, Postgres/SQL optimization, lightweight high-performance Python services"
+34,Ather Energy,AI & Telematics Software Engineer,"Bangalore, India",12 - 15 LPA,https://www.atherenergy.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"IoT telemetry data ingestion, predictive maintenance ML models, Python web portals"
+35,Rubrik,AI API Platform Engineer,"Bangalore, India",12 - 15 LPA,https://www.rubrik.com/company/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Data security posture management, LLM sensitive data classification, Python APIs"
+36,Cloudflare,Data Scientist & AI Platform Developer,"Bangalore, India",12 - 15 LPA,https://www.cloudflare.com/careers/,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Edge AI inference, vector databases, automated threat detection models"
+37,Speechify,Software Engineer - AI Data & Voice,"Bangalore, India",12 - 15 LPA,https://speechify.com/careers/,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Voice synthesis, text-to-speech pipelines, Python audio processing"
+38,Abnormal Security,Software Engineer - AI Detection Engines,"Bangalore, India",12 - 15 LPA,https://abnormalsecurity.com/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Email NLP threat detection, FinBERT style classification for fraud prevention"
+39,Hasura,Full Stack Engineer (GraphQL & Python),"Bangalore, India",12 - 15 LPA,https://hasura.io/careers/,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Instant GraphQL APIs, relational database integrations, Postgres optimization"
+40,BrowserStack,Software Engineer - Testing Infrastructure,"Bangalore, India",12 - 15 LPA,https://www.browserstack.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Cloud browser testing grid, CI/CD integrations, high-reliability Python/Node services"
+41,Cohesity,Member of Technical Staff - AI Copilot,"Bangalore, India",12 - 15 LPA,https://www.cohesity.com/company/careers/,2026-10-27,Workday,prajwathg@gmail.com,Applied,No,,"GenAI data management, conversational enterprise search, RAG on unstructured data"
+42,CleverTap,Full Stack Developer - Retention Platform,"Bangalore, India",12 - 15 LPA,https://clevertap.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"User behavior tracking, segmentation ML models, real-time campaign triggering"
+43,Sprinklr,Product Engineer - Conversational AI,"Bangalore, India",12 - 15 LPA,https://www.sprinklr.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Social media sentiment analysis, automated customer response bots, NLP"
+44,Whatfix,Software Engineer - Product Analytics & AI,"Bangalore, India",12 - 15 LPA,https://whatfix.com/careers/,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Digital adoption platform, in-app guidance AI, full stack telemetry"
+45,Capillary Technologies,Lead Software Engineer - AI Consumer Insights,"Bangalore, India",12 - 15 LPA,https://www.capillarytech.com/about-us/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Tech Lead role: loyalty platform, personalization engines, banking rewards integrations"
+46,Acceldata,Backend Engineer - Data Observability,"Bangalore, India",12 - 15 LPA,https://www.acceldata.io/company/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Data pipeline monitoring, anomaly detection, Python/SQL performance profiling"
+47,Druva,Software Engineer - Cloud Data Protection,"Bangalore, India",12 - 15 LPA,https://www.druva.com/about/careers/,2026-10-27,Jobvite,prajwathg@gmail.com,Applied,No,,"SaaS backup, deduplication algorithms, secure cloud storage architectures"
+48,Zimperium,Senior AI Software Engineer - Threat Defense,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/zimperium/ai-engineer,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Mobile vulnerability detection, ML classification models, Python security tooling"
+49,Fractal Analytics,AI Engineer - Cogno AI & GenAI,"Bangalore, India",12 - 15 LPA,https://fractal.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Enterprise GenAI copilots, FinBERT financial analytics, multi-agent systems"
+50,Quantiphi,Senior AI Developer - Document Intelligence & RAG,"Bangalore, India",12 - 15 LPA,https://quantiphi.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Document AI (OCR + LLM), credit assessment pipelines for banking clients"
+51,Tiger Analytics,Lead Data Scientist / AI Engineer,"Bangalore, India",12 - 15 LPA,https://www.tigeranalytics.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Advanced predictive modeling, enterprise ML pipelines, Python team leadership"
+52,Sigmoid,Senior Python & GenAI Engineer,"Bangalore, India",12 - 15 LPA,https://www.sigmoid.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Data engineering on cloud, real-time RAG applications, ML model operationalization"
+53,Brillio,Lead AI Engineer - Multi-Agent Frameworks,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/brillio/lead-ai-engineer,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"LangChain, LlamaIndex, AutoGen multi-agent orchestration, full stack integration"
+54,Thoughtworks,Full Stack Developer - Python / React & AI,"Bangalore, India",12 - 15 LPA,https://www.thoughtworks.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Agile software craftmanship, clean architecture, enterprise digital transformation"
+55,Gupshup,Conversational AI Engineer (Python & NLP),"Bangalore, India",12 - 15 LPA,https://www.gupshup.io/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Enterprise conversational messaging, bot orchestration, multi-agent NLP pipelines"
+56,Verloop.io,Machine Learning Engineer - Customer AI,"Bangalore, India",12 - 15 LPA,https://verloop.io/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Context-aware conversational agents, dialogue state tracking, Python/FastAPI microservices"
+57,Haptik (Jio),Lead Software Engineer - Conversational Platforms,"Bangalore, India",12 - 15 LPA,https://www.haptik.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Leading development on enterprise bot engine, speech synthesis, Python & Django"
+58,Wysa,AI & NLP Engineer (Conversational Health),"Bangalore, India",12 - 15 LPA,https://www.wysa.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Empathetic dialogue systems, fine-tuned transformer classification, Python backend"
+59,Netradyne,Computer Vision & ML Systems Engineer,"Bangalore, India",12 - 15 LPA,https://www.netradyne.com/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Edge AI video processing, deep learning model deployment, Python automation"
+60,SigTuple,AI Software Engineer - Medical Document OCR & Imaging,"Bangalore, India",12 - 15 LPA,https://sigtuple.com/careers.html,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Medical report OCR extraction (similar to BG document intelligence), Python/PyTorch"
+61,Locus.sh,Backend Developer - Routing & Optimization,"Bangalore, India",12 - 15 LPA,https://locus.sh/careers/,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Supply chain optimization algorithms, high throughput Python/Java REST services"
+62,FarEye,Software Development Engineer - Logistics Intelligence,"Bangalore, India",12 - 15 LPA,https://fareye.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Predictive delivery ETAs, distributed event tracking, Python service layers"
+63,Entropik Tech,AI/ML Engineer - Emotion AI & Multimodal,"Bangalore, India",12 - 15 LPA,https://entropik.io/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Voice emotion recognition, facial expression analysis, multi-modal transformer models"
+64,Infilect,Full Stack Python Developer - Retail AI,"Bangalore, India",12 - 15 LPA,https://www.infilect.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Retail visual intelligence, image recognition backend, React/Python web dashboards"
+65,BharatPe,Software Engineer - Merchant Banking & Lending,"Bangalore, India",12 - 15 LPA,https://bharatpe.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"QR payment settlements, underwriting algorithms, Python financial backend"
+66,Smallcase,Full Stack Developer - Platform Engineering,"Bangalore, India",12 - 15 LPA,https://smallcase.hire.trakstar.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Investment cart architectures, broker API integrations, React and Python/Node"
+67,Kuvera,Backend Engineer - Financial Data Pipelines,"Bangalore, India",12 - 15 LPA,https://kuvera.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Mutual fund ledger parsing, automated statement OCR, secure financial APIs"
+68,CoinDCX,Software Engineer - Trading & Risk Systems,"Bangalore, India",12 - 15 LPA,https://coindcx.com/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"High concurrency order matching, automated compliance AML checks, Python services"
+69,CoinSwitch,Backend Developer - Core Platforms,"Bangalore, India",12 - 15 LPA,https://coinswitch.co/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Ledger state management, low-latency microservices, Python/Go backend"
+70,M2P Fintech,Senior Software Engineer - Banking APIs,"Bangalore, India",12 - 15 LPA,https://m2pfintech.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Core banking middleware, co-branded card infrastructure, banking regulatory compliance"
+71,Open Financial Technologies,Full Stack Engineer - SME Neo-Banking,"Bangalore, India",12 - 15 LPA,https://open.money/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated invoice parsing, automated tax calculation, Python/Django & React"
+72,Khatabook,Software Development Engineer - Merchant Ledger,"Bangalore, India",12 - 15 LPA,https://khatabook.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Digital ledger sync, distributed transaction processing, high-scale Python backends"
+73,Money View,AI/ML Engineer - Credit Risk Underwriting,"Bangalore, India",12 - 15 LPA,https://moneyview.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"SMS statement parsing, CAM risk scoring, automated loan sanctioning models"
+74,KreditBee,Backend Developer - Lending Platforms,"Bangalore, India",12 - 15 LPA,https://www.kreditbee.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Credit bureau integrations, KYC document OCR verification, Python REST APIs"
+75,EarlySalary (Fibe),Lead Software Engineer - FinTech AI,"Bangalore, India",12 - 15 LPA,https://www.fibe.in/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Tech lead role: automated underwriting rules engine, banking integrations"
+76,Flipkart,Software Development Engineer II - Backend / AI,"Bangalore, India",12 - 15 LPA,https://www.flipkartcareers.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Catalog search, price intelligence, distributed backend microservices"
+77,Myntra,Software Engineer - Virtual Try-On & Catalog Intelligence,"Bangalore, India",12 - 15 LPA,https://careers.myntra.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Direct project match: Virtual TryOn platform experience, computer vision fashion tagging"
+78,BigBasket,Backend Engineer - Warehouse Management & Fulfillment,"Bangalore, India",12 - 15 LPA,https://www.bigbasket.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Inventory optimization, automated order batching, Python/Postgres backend"
+79,Rapido,Software Development Engineer - Pricing & Dispatch,"Bangalore, India",12 - 15 LPA,https://www.rapido.bike/Careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Dynamic surge pricing, geospatial dispatching algorithms, Python services"
+80,Porter,Full Stack Developer - Enterprise Logistics,"Bangalore, India",12 - 15 LPA,https://porter.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Intra-city logistics platform, automated invoicing, React & Python backend"
+81,Shadowfax,Software Engineer - Routing Engine,"Bangalore, India",12 - 15 LPA,https://www.shadowfax.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Hyperlocal route planning, crowdsourced delivery APIs, Python/Django"
+82,Livspace,Full Stack Engineer - Design Automation,"Bangalore, India",12 - 15 LPA,https://www.livspace.com/in/career,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"3D room modeling APIs, automated bill-of-materials calculation, Python backend"
+83,Wakefit,Backend Developer - D2C Intelligence,"Bangalore, India",12 - 15 LPA,https://www.wakefit.co/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Order orchestration, omnichannel customer data platform, Python REST APIs"
+84,Cult.fit,Software Engineer - Health & Fitness Intelligence,"Bangalore, India",12 - 15 LPA,https://www.cult.fit/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Computer vision motion tracking, workout recommendations, full stack mobile/web APIs"
+85,HealthifyMe,AI Engineer - Ria Virtual Nutritionist,"Bangalore, India",12 - 15 LPA,https://www.healthifyme.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Food photo recognition, conversational health copilot, multi-modal LLM integration"
+86,Practo,Software Development Engineer - Telehealth & EHR,"Bangalore, India",12 - 15 LPA,https://www.practo.com/company/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Electronic health record compliance, automated prescription OCR, Python web services"
+87,Appsmith,Full Stack Developer (Python & TypeScript),"Bangalore, India",12 - 15 LPA,https://www.appsmith.com/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Open-source low-code platform, database connectors (MySQL, Oracle, Mongo), REST APIs"
+88,ToolJet,Software Engineer - Enterprise Connectors,"Bangalore, India",12 - 15 LPA,https://www.tooljet.com/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Open-source internal tool builder, Python plugin ecosystem, React frontend"
+89,LambdaTest,Software Engineer - HyperExecute Automation,"Bangalore, India",12 - 15 LPA,https://www.lambdatest.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Distributed test execution cloud, containerized runner orchestration, Python/Go"
+90,HackerEarth,Backend Developer - Code Evaluation Engine,"Bangalore, India",12 - 15 LPA,https://www.hackerearth.com/companies/hackerearth/jobs/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Sandboxed code execution (Python, Java, C++), automated grading algorithms"
+91,Scaler (InterviewBit),Software Development Engineer - Learning Platform,"Bangalore, India",12 - 15 LPA,https://www.scaler.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Interactive coding sandboxes, telemetry analytics, Python/Django & React"
+92,LeadSquared,Senior Software Engineer - CRM Automation,"Bangalore, India",12 - 15 LPA,https://www.leadsquared.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Sales workflow automation, lead scoring models, high-scale Python REST API"
+93,Darwinbox,Senior Backend Developer - Enterprise HRMS,"Bangalore, India",12 - 15 LPA,https://darwinbox.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Payroll calculation engine, enterprise compliance workflows, SQL/MySQL optimization"
+94,Keka HR,Software Engineer - Attendance & Payroll Systems,"Bangalore, India",12 - 15 LPA,https://www.keka.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Direct project match: Attendance verification platform, biometric OCR/logging, Python"
+95,GreytHR,Backend Engineer - Statutory Compliance,"Bangalore, India",12 - 15 LPA,https://www.greythr.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Indian tax/banking compliance calculation engines, automated salary disbursals"
+96,Zenoti,Software Engineer - Cloud POS Platform,"Bangalore, India",12 - 15 LPA,https://www.zenoti.com/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Salon/spa enterprise ERP, payment gateway integrations, distributed database layers"
+97,Chargebee,Software Engineer - Subscription Billing Platform,"Bangalore, India",12 - 15 LPA,https://www.chargebee.com/careers/,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"Recurring payments, multi-currency invoicing, banking reconciliation microservices"
+98,Cisco,Software Engineer - AI Network Observability,"Bangalore, India",12 - 15 LPA,https://jobs.cisco.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Network anomaly detection, telemetry data pipelines, Python & REST architectures"
+99,Oracle India,Software Developer - OCI AI Services,"Bangalore, India",12 - 15 LPA,https://www.oracle.com/in/corporate/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Oracle DB & vector search, cloud document intelligence, enterprise Python services"
+100,SAP Labs India,Developer - Business AI & BTP,"Bangalore, India",12 - 15 LPA,https://www.sap.com/india/about/careers.html,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joule GenAI copilot, enterprise RAG, full stack integration on SAP BTP"
+101,Intuit India,Software Engineer - AI-Driven Financial Products,"Bangalore, India",12 - 15 LPA,https://www.intuit.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"QuickBooks/TurboTax financial document classification, FinTech AI models, Python"
+102,VMware by Broadcom,Software Engineer - Cloud Management,"Bangalore, India",12 - 15 LPA,https://careers.broadcom.com/,2026-10-27,Workday,prajwathg@gmail.com,Applied,No,,"Private cloud orchestration, Linux system-level programming, Python automation"
+103,Dell Technologies,Software Principal Engineer - AI Solutions,"Bangalore, India",12 - 15 LPA,https://jobs.dell.com/,2026-10-27,Workday,prajwathg@gmail.com,Applied,No,,"Enterprise server automation, generative AI infrastructure deployment, Python"
+104,Bosch Global Software Technologies,Technical Specialist - AI & Computer Vision,"Bangalore, India",12 - 15 LPA,https://www.bosch-softwaretechnologies.com/en/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automotive AI models, edge video inference, Python and Linux system development"
+105,Siemens Healthineers,Software Engineer - Healthcare AI Platforms,"Bangalore, India",12 - 15 LPA,https://www.siemens-healthineers.com/en-in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Clinical document processing, HIPAA-compliant model serving, Python full stack"
+106,Portkey.ai,AI Systems Engineer - LLMOps & Gateway,"Bangalore, India",12 - 15 LPA,https://portkey.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"LLM production routing, prompt caching, latency optimization in Python/Node"
+107,TrueFoundry,MLOps & LLM Platform Engineer,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/truefoundry,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Containerized model deployment, serverless GPU inference, Python microservices"
+108,Composio.ai,AI Agent Infrastructure Engineer,"Bangalore, India",12 - 15 LPA,https://composio.dev/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Direct fit: Multi-agent tooling, autonomous tool invocation, Python/TypeScript SDKs"
+109,Ema Unlimited,AI Software Engineer - Universal AI Employee,"Bangalore, India",12 - 15 LPA,https://www.ema.co/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Enterprise agent orchestration, RAG on unstructured enterprise documents"
+110,Segmind,Backend AI Engineer - Fast Model Inference,"Bangalore, India",12 - 15 LPA,https://www.segmind.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"PyTorch model serving, serverless API endpoints, distributed Python architecture"
+111,Atlan,Full Stack Developer - Data Governance & AI,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/atlan,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Active metadata platform, GraphQL/REST APIs, Python backend & React frontend"
+112,Murf.ai,AI Speech & Voice Engineer,"Bangalore, India",12 - 15 LPA,https://murf.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Text-to-speech synthesis, voice cloning, audio processing pipelines in Python"
+113,InVideo,Full Stack Python Engineer - Video AI,"Bangalore, India",12 - 15 LPA,https://invideo.io/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Generative video scripts, automated storyboard rendering, Python/Django & React"
+114,Dubverse.ai,Machine Learning Engineer - Multilingual Speech,"Bangalore, India",12 - 15 LPA,https://dubverse.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Indic speech models, automated subtitling OCR, Python audio processing"
+115,SuperOps.ai,Software Development Engineer - AI Automation,"Bangalore, India",12 - 15 LPA,https://superops.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"IT management automation, predictive anomaly detection, Python backend services"
+116,DhiWise,Full Stack Developer - DevTools & CodeGen AI,"Bangalore, India",12 - 15 LPA,https://www.dhiwise.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Design-to-code compiler, automated AST generation, React and Python/Node.js"
+117,Simplismart,Systems Software Engineer - LLM Inference,"Bangalore, India",12 - 15 LPA,https://simplismart.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"vLLM model optimization, low-latency API wrappers, high performance Python"
+118,Spyne.ai,Computer Vision & ML Engineer,"Bangalore, India",12 - 15 LPA,https://www.spyne.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated background replacement, vehicle inspection computer vision models"
+119,Suki.ai,Machine Learning Engineer - Healthcare Voice AI,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/suki,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Direct alignment: Voice recognition, clinical entity extraction, conversational NLP"
+120,Hyperverge,AI Engineer - Document Intelligence & OCR,"Bangalore, India",12 - 15 LPA,https://hyperverge.co/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Direct match: Bank document OCR extraction, identity verification, Python/PyTorch"
+121,Karza Technologies,Lead Software Engineer - Banking Analytics,"Bangalore, India",12 - 15 LPA,https://karza.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"FinBERT classification, credit appraisal memo (CAM) scoring, banking compliance"
+122,Perfios,Senior Software Engineer - Statement Analysis & OCR,"Bangalore, India",12 - 15 LPA,https://www.perfios.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Bank statement parser, financial risk underwriting, high precision OCR pipelines"
+123,Signzy,AI Engineer - Digital Onboarding & Contracts,"Bangalore, India",12 - 15 LPA,https://signzy.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Direct match: Contract onerous clause analysis, bank guarantee digitization, Python"
+124,Bureau.id,Backend Developer - Fraud Intelligence,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/bureau.id,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Device fingerprinting, real-time risk decisioning, scalable Python microservices"
+125,IDfy,Full Stack Python Developer - Verification Platform,"Bangalore, India",12 - 15 LPA,https://www.idfy.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated background verification APIs, document fraud detection, React/Python"
+126,Decentro,Senior Backend Developer - Banking APIs,"Bangalore, India",12 - 15 LPA,https://decentro.tech/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Open banking API middleware (Axis/SBI/HDFC), automated payment reconciliations"
+127,TartanHQ,Full Stack Engineer - Payroll & Work Data APIs,"Bangalore, India",12 - 15 LPA,https://www.tartan.one/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Payroll consent verification, income statement extraction, Python/FastAPI & React"
+128,Velocity.in,Backend Engineer - Revenue Based Financing,"Bangalore, India",12 - 15 LPA,https://jobs.ashbyhq.com/velocity,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"E-commerce cashflow forecasting, underwriting engines, PostgreSQL and Python"
+129,Klub,Full Stack Developer - Capital Platforms,"Bangalore, India",12 - 15 LPA,https://klubworks.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"D2C funding marketplace, financial analytics dashboards, Python/Django & React"
+130,Volopay,Software Engineer - Corporate Spend & Cards,"Bangalore, India",12 - 15 LPA,https://www.volopay.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Corporate expense approvals, accounting automation, banking integrations"
+131,Kodo,Backend Developer - Card Issuance & Credit,"Bangalore, India",12 - 15 LPA,https://kodo.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Card ledger architectures, credit underwriting rules, Python/REST services"
+132,SigNoz,Full Stack Engineer - Open Source Observability,"Bangalore, India",12 - 15 LPA,https://signoz.io/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"OpenTelemetry metrics, ClickHouse queries, distributed traces, Python/Go & React"
+133,Devtron Labs,Software Engineer - Kubernetes CI/CD,"Bangalore, India",12 - 15 LPA,https://devtron.ai/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Open-source Kubernetes deployment portal, container orchestration, Python/Go"
+134,Privado.ai,Software Engineer - Code Privacy Analysis,"Bangalore, India",12 - 15 LPA,https://www.privado.ai/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Static code analysis (Python/Java/JS), data flow mapping, privacy compliance"
+135,Sprinto,Backend Developer - Automated Security Compliance,"Bangalore, India",12 - 15 LPA,https://sprinto.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"SOC2/ISO27001 automation, cloud security posture scanners, Python & REST APIs"
+136,Scrut Automation,Senior Software Engineer - Governance & Risk,"Bangalore, India",12 - 15 LPA,https://www.scrut.io/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Continuous compliance auditing, automated evidence collection, Python backend"
+137,Rocketlane,Full Stack Developer - Client Collaboration SaaS,"Bangalore, India",12 - 15 LPA,https://www.rocketlane.com/careers,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Customer onboarding portal, document approval workflows, React and Python/Node"
+138,Testsigma,Software Engineer - AI-Driven Test Automation,"Bangalore, India",12 - 15 LPA,https://testsigma.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Natural language test scripting, web element locator ML models, Python"
+139,Traceable AI,Software Engineer - API Security Intelligence,"Bangalore, India",12 - 15 LPA,https://www.traceable.ai/careers,2026-10-27,Greenhouse,prajwathg@gmail.com,Applied,No,,"API call threat analysis, behavioral anomaly detection, high-throughput Python"
+140,SquadStack,Full Stack Python Developer - Sales Automation,"Bangalore, India",12 - 15 LPA,https://www.squadstack.com/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Voice AI call intelligence, speech-to-text scoring, React and Python/Django"
+141,Locofy.ai,Software Engineer - Frontend AI Compiler,"Bangalore, India",12 - 15 LPA,https://www.locofy.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"AI code generation, AST parsing, React/TypeScript and Python backend services"
+142,Superflows,AI Systems Engineer - In-App Copilots,"Bangalore, India",12 - 15 LPA,https://superflows.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"SaaS copilot tool-calling, autonomous agent workflows, Python backend"
+143,Plum,Full Stack Engineer - Health Benefits Platform,"Bangalore, India",12 - 15 LPA,https://www.plumhq.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated insurance claims OCR, policy management APIs, React and Python"
+144,Loop Health,Backend Developer - Telemedicine & Claims,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/loophealth,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Medical billing automation, electronic prescription pipelines, Python/Django"
+145,Kula.ai,Software Engineer - Outbound Recruitment Tech,"Bangalore, India",12 - 15 LPA,https://www.kula.ai/careers,2026-10-27,Ashby,prajwathg@gmail.com,Applied,No,,"Candidate enrichment algorithms, automated outreach workflows, Python/Node"
+146,BarRaiser,AI Engineer - Interview Intelligence & Video AI,"Bangalore, India",12 - 15 LPA,https://barraiser.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Real-time speech transcription, interview answer scoring, NLP and Python"
+147,Zupain,Full Stack Python Developer - Local Commerce,"Bangalore, India",12 - 15 LPA,https://zupain.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Merchant storefronts, WhatsApp commerce integrations, Django/React architecture"
+148,Mudrex,Backend Developer - Algorithmic Investing,"Bangalore, India",12 - 15 LPA,https://mudrex.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Automated portfolio rebalancing, high-throughput financial execution APIs, Python"
+149,Fashinza,Full Stack Engineer - Apparel Supply Chain Tech,"Bangalore, India",12 - 15 LPA,https://fashinza.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Manufacturing tracking, automated BOM calculations, React and Python/Node.js"
+150,BHuman.ai,AI Video Generation Engineer,"Bangalore, India",12 - 15 LPA,https://www.bhuman.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Facial landmark tracking, personalized video rendering, Python & PyTorch"
+151,Cognida.ai,Senior AI/ML Engineer - Enterprise Copilots,"Bangalore, India",12 - 15 LPA,https://cognida.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"RAG document synthesis, multi-tenant LLM deployment, Python/FastAPI microservices"
+152,Blend (AI Studio),Full Stack Engineer - Ecommerce Visual AI,"Bangalore, India",12 - 15 LPA,https://www.blend.to/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Generative product photography, diffusion model pipelines, React and Python backend"
+153,Kodo Card,Senior Backend Developer - Financial Ledger,"Bangalore, India",12 - 15 LPA,https://kodo.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Double-entry bookkeeping engine, automated bank settlements, Python REST APIs"
+154,Securden,Software Engineer - Privileged Access Security,"Bangalore, India",12 - 15 LPA,https://www.securden.com/careers.html,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Zero-trust remote access, automated password vaulting, Python security services"
+155,Superflows AI,Lead Software Engineer - Autonomous Agents,"Bangalore, India",12 - 15 LPA,https://superflows.ai/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Agentic API execution, tool synthesis, LangChain/LlamaIndex, Python architecture"
+156,Google (via TCS/Wipro Staffing),Software Engineer III - Cloud AI (Contract),"Bangalore, India",12 - 15 LPA,https://careers.google.com/jobs/,2026-10-27,Google Careers,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Google Pixel phone, branded backpack, Googler welcome kit. Contract role via staffing."
+157,Microsoft,Software Engineer - Azure AI Services,"Bangalore, India",12 - 15 LPA,https://careers.microsoft.com/,2026-10-27,Microsoft Careers,prajwathg@gmail.com,Applied,No,,"Joining goodies: Surface Laptop, Xbox Game Pass, Microsoft branded welcome kit, standing desk. CTC fits L59-60 band."
+158,Amazon (AWS),SDE-1 - Machine Learning Platform,"Bangalore, India",12 - 15 LPA,https://www.amazon.jobs/,2026-10-27,Amazon Jobs,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Amazon Echo, Kindle, AWS credits, branded swag bag. Entry-mid level SDE."
+159,Apple,Software Engineer - Siri & AI/ML,"Bangalore, India",12 - 15 LPA,https://jobs.apple.com/,2026-10-27,Apple Jobs,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, iPhone (latest), AirPods Pro, Apple Watch, full Apple ecosystem welcome kit."
+160,Meta (Facebook),Software Engineer - AI Infrastructure,"Bangalore, India",12 - 15 LPA,https://www.metacareers.com/,2026-10-27,Meta Careers,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Meta Quest VR headset, branded hoodie, Portal device, RSU grant."
+161,Flipkart,SDE-2 - Personalization & AI,"Bangalore, India",12 - 15 LPA,https://www.flipkartcareers.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Flipkart Plus membership, branded backpack & hoodie, welcome hamper."
+162,Swiggy,Backend Engineer - Search & Discovery AI,"Bangalore, India",12 - 15 LPA,https://careers.swiggy.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Swiggy One membership, branded welcome kit with premium headphones."
+163,Meesho,Software Engineer - Platform & AI,"Bangalore, India",12 - 15 LPA,https://careers.meesho.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded merch box, unlimited snacks, wellness kit, phone allowance."
+164,CRED,Full Stack Engineer - Payments AI,"Bangalore, India",12 - 15 LPA,https://careers.cred.club/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, premium CRED store credits, designer welcome kit, Bose headphones."
+165,Razorpay,Software Engineer - Payment Intelligence,"Bangalore, India",12 - 15 LPA,https://razorpay.com/jobs/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded Razorpay backpack, premium headphones, welcome hamper, home office budget."
+166,Salesforce India,MTS - Einstein AI Platform,"Bangalore, India",12 - 15 LPA,https://salesforce.wd12.myworkdayjobs.com/,2026-10-27,Workday,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Salesforce branded backpack, Ohana welcome kit, noise-canceling headphones."
+167,Atlassian,Software Engineer - AI-Powered Collaboration,"Bangalore, India",12 - 15 LPA,https://www.atlassian.com/company/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, AirPods, branded Atlassian hoodie & backpack, WFH setup allowance \$500."
+168,Freshworks,Software Engineer - Freddy AI,"Bangalore (Chennai HQ), India",12 - 15 LPA,https://careers.freshworks.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded welcome kit, premium headphones, Freshworks swag box."
+169,Zoho (ManageEngine),Software Engineer - AI & Analytics,"Bangalore, India",12 - 15 LPA,https://careers.zohocorp.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook/ThinkPad, Zoho branded kit, phone upgrade allowance, ergonomic desk setup."
+170,Intuit India,Software Engineer - AI/ML Platform,"Bangalore, India",12 - 15 LPA,https://jobs.intuit.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Bose headphones, Intuit branded welcome hamper, home office budget ₹50K."
+171,PhonePe,Software Engineer - AI & Fraud Detection,"Bangalore, India",12 - 15 LPA,https://www.phonepe.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, PhonePe branded backpack, premium welcome kit, home office setup budget."
+172,Paytm (One97),Backend Engineer - AI Payments Platform,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/paytm,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook, Paytm wallet credits ₹10K, branded merch, phone if not provided."
+173,Zerodha,Backend Developer - Trading Platform,"Bangalore, India",12 - 15 LPA,https://zerodha.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro M-series, Zerodha branded kit, premium ergonomic chair, monitor."
+174,Groww,Software Engineer - Wealth AI,"Bangalore, India",12 - 15 LPA,https://groww.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, AirPods, branded Groww welcome box, WFH setup allowance."
+175,Slice (Fintech),Full Stack Developer - AI Credit Engine,"Bangalore, India",12 - 15 LPA,https://www.sliceit.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, phone upgrade program, Slice card with ₹5K balance, premium welcome kit."
+176,Myntra,SDE-2 - Visual Search & AI,"Bangalore, India",12 - 15 LPA,https://www.myntra.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Myntra shopping vouchers ₹10K, branded welcome kit, lifestyle perks."
+177,BigBasket (Tata),Software Engineer - Demand Forecasting AI,"Bangalore, India",12 - 15 LPA,https://www.bigbasket.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook/laptop, BigBasket delivery credits, Tata branded welcome hamper, headphones."
+178,Urban Company,Backend Engineer - Matching & AI,"Bangalore, India",12 - 15 LPA,https://careers.urbancompany.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, UC service credits, branded merch kit, premium headphones."
+179,Nykaa,Software Engineer - Recommendation AI,"Bangalore, India",12 - 15 LPA,https://careers.nykaa.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook, Nykaa shopping vouchers, beauty hamper welcome kit, branded accessories."
+180,Lenskart,Full Stack Developer - AI Try-On Platform,"Bangalore, India",12 - 15 LPA,https://lenskart.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Lenskart vouchers, premium sunglasses, branded welcome kit."
+181,Postman,Software Engineer - AI API Testing,"Bangalore, India",12 - 15 LPA,https://www.postman.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Postman branded hoodie & backpack, AirPods, WFH setup allowance."
+182,Chargebee,Full Stack Engineer - Billing AI,"Bangalore, India",12 - 15 LPA,https://jobs.lever.co/chargebee,2026-10-27,Lever,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Chargebee branded welcome kit, premium headphones, home office stipend."
+183,Hasura,Software Engineer - GraphQL & AI APIs,"Bangalore, India",12 - 15 LPA,https://hasura.io/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro M-series, developer swag kit, premium keyboard, noise-canceling headphones."
+184,BrowserStack,Software Engineer - AI Test Automation,"Bangalore (Mumbai HQ), India",12 - 15 LPA,https://www.browserstack.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, multiple test devices (phones/tablets), branded welcome kit, WFH budget."
+185,Clevertap,Backend Engineer - AI Analytics Platform,"Bangalore, India",12 - 15 LPA,https://clevertap.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded swag box, premium headphones, phone testing device."
+186,Dream11 (Dream Sports),Software Engineer - Fantasy AI & ML,"Bangalore, India",12 - 15 LPA,https://www.dreamsports.group/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Dream11 branded jersey & merchandise, AirPods Pro, gaming peripherals."
+187,MPL (Mobile Premier League),Backend Developer - Game AI Platform,"Bangalore, India",12 - 15 LPA,https://www.getmpl.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, gaming phone (ROG/OnePlus), MPL credits, premium gaming headset."
+188,Zynga India,Software Engineer - Game Data & AI,"Bangalore, India",12 - 15 LPA,https://www.zynga.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, iPad, gaming console (PS5/Switch), Zynga merch, premium headphones."
+189,InMobi,Software Engineer - Ad Intelligence AI,"Bangalore, India",12 - 15 LPA,https://www.inmobi.com/company/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, InMobi branded kit, phone upgrade program, premium noise-canceling headphones."
+190,ShareChat (Mohalla Tech),ML Engineer - Content Recommendation,"Bangalore, India",12 - 15 LPA,https://sharechat.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, OnePlus/Pixel phone, branded hoodie & backpack, Josh app creator kit."
+191,Practo,Full Stack Developer - Health AI Platform,"Bangalore, India",12 - 15 LPA,https://www.practo.com/company/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, health insurance premium plan, Practo Plus subscription, branded welcome kit."
+192,PharmEasy,Backend Engineer - AI Drug Discovery,"Bangalore, India",12 - 15 LPA,https://pharmeasy.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook, PharmEasy health kit, wellness subscription, branded merchandise box."
+193,Unacademy,Software Engineer - AI Learning Platform,"Bangalore, India",12 - 15 LPA,https://unacademy.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, iPad for testing, Unacademy Plus subscription, branded welcome hamper."
+194,upGrad,Full Stack Developer - AI Course Engine,"Bangalore, India",12 - 15 LPA,https://www.upgrad.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, upGrad course credits, premium headphones, branded welcome kit."
+195,Cult.fit (Curefit),Software Engineer - Fitness AI Platform,"Bangalore, India",12 - 15 LPA,https://www.cult.fit/cult-careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, cult.fit Elite membership, fitness tracker/smartwatch, branded gym kit."
+196,Ola Electric,Software Engineer - Battery AI & IoT,"Bangalore, India",12 - 15 LPA,https://www.olaelectric.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Ola S1 Pro scooter discount voucher, branded merchandise, phone allowance."
+197,Rapido,Backend Engineer - Ride Matching AI,"Bangalore, India",12 - 15 LPA,https://careers.rapido.bike/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Rapido ride credits, branded welcome kit, premium headphones."
+198,Delhivery,Software Engineer - Logistics AI & Routing,"Bangalore, India",12 - 15 LPA,https://www.delhivery.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded backpack & merch, home office setup allowance, phone upgrade."
+199,Dunzo,Full Stack Developer - Hyperlocal AI,"Bangalore, India",12 - 15 LPA,https://www.dunzo.com/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Dunzo delivery credits, branded welcome hamper, premium headphones."
+200,NoBroker,Software Engineer - PropTech AI Platform,"Bangalore, India",12 - 15 LPA,https://www.nobroker.in/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, NoBroker subscription, branded kit, home office setup budget."
+201,Nutanix India,Software Engineer - Cloud AI Automation,"Bangalore, India",12 - 15 LPA,https://www.nutanix.com/company/careers,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, Nutanix branded premium backpack, noise-canceling headphones, home setup \$500."
+202,VMware (Broadcom India),Software Engineer - AI Ops & Automation,"Bangalore, India",12 - 15 LPA,https://careers.vmware.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook/ThinkPad Pro, VMware branded kit, premium headphones, dual monitor setup."
+203,NetApp India,Software Engineer - Cloud Data AI,"Bangalore, India",12 - 15 LPA,https://www.netapp.com/careers/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded welcome kit, noise-canceling headphones, ergonomic desk accessories."
+204,ServiceNow India,Software Engineer - Now Intelligence AI,"Bangalore (Hyderabad also), India",12 - 15 LPA,https://careers.servicenow.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, premium headphones, ServiceNow branded backpack & hoodie, home office stipend."
+205,Commvault India,Software Engineer - AI Data Protection,"Bangalore, India",12 - 15 LPA,https://careers.commvault.com/,2026-10-27,Direct Portal,prajwathg@gmail.com,Applied,No,,"Joining goodies: MacBook Pro, branded welcome kit, premium headphones, standing desk, phone allowance."
+`;
+
+        async function fetchData() {
+            try {
+                if (window.location.protocol === 'file:') {
+                    parseCSV(EMBEDDED_CSV);
+                    return;
+                }
+                const response = await fetch('job_applications.csv?t=' + Date.now());
+                if (!response.ok) throw new Error('Fetch failed');
+                const csvText = await response.text();
+                parseCSV(csvText);
+            } catch (err) {
+                console.log('Using embedded CSV data', err);
+                parseCSV(EMBEDDED_CSV);
+            }
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length <= 1) {
+                renderEmpty();
+                return;
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            allData = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                // Simple CSV parser supporting quotes
+                const row = [];
+                let inQuotes = false;
+                let current = '';
+                for (let char of lines[i]) {
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) {
+                        row.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                row.push(current.trim());
+
+                const item = {};
+                headers.forEach((h, idx) => {
+                    item[h] = row[idx] || '';
+                });
+                allData.push(item);
+            }
+
+            renderDashboard(allData);
+        }
+
+        function renderDashboard(data) {
+            const total = data.length;
+            const reverted = data.filter(d => (d.Reverted_Back || '').toLowerCase() === 'yes').length;
+            const interviews = data.filter(d => (d.Status || '').toLowerCase().includes('interview')).length;
+            const rate = total > 0 ? ((reverted / total) * 100).toFixed(1) : '0';
+
+            document.getElementById('total-applied').innerText = total;
+            document.getElementById('total-reverted').innerText = reverted;
+            document.getElementById('total-interviews').innerText = interviews;
+            document.getElementById('revert-rate').innerText = rate + '%';
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (total === 0) {
+                renderEmpty();
+                return;
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                const isReverted = (item.Reverted_Back || '').toLowerCase() === 'yes';
+                const status = item.Status || 'Applied';
+
+                let badgeClass = 'badge-applied';
+                if (status.toLowerCase().includes('interview')) badgeClass = 'badge-interview';
+                else if (status.toLowerCase().includes('reject')) badgeClass = 'badge-rejected';
+                else if (isReverted) badgeClass = 'badge-reverted';
+
+                const jobUrl = item.Job_URL ? `<a href="${item.Job_URL}" target="_blank" style="color: #60a5fa; text-decoration: none;"><strong>${item.Job_Title || ''}</strong> ↗</a>` : `<strong>${item.Job_Title || ''}</strong>`;
+
+                tr.innerHTML = `
+                    <td><strong>#${item.Application_ID || ''}</strong></td>
+                    <td>${item.Date_Applied || ''}</td>
+                    <td><strong>${item.Company || ''}</strong></td>
+                    <td>${jobUrl}</td>
+                    <td>${item.Location || 'Bangalore, India'}</td>
+                    <td><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 600;">${item.Target_CTC || '12 - 15 LPA'}</span></td>
+                    <td>${item.Channel || 'Direct'}</td>
+                    <td><span class="badge ${badgeClass}">${status}</span></td>
+                    <td><span class="badge ${isReverted ? 'badge-reverted' : 'badge-pending'}">${isReverted ? 'Yes' : 'No'}</span></td>
+                    <td><span style="color: var(--text-secondary); font-size: 0.8rem;">${item.Notes || '-'}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderEmpty() {
+            document.getElementById('total-applied').innerText = '0';
+            document.getElementById('total-reverted').innerText = '0';
+            document.getElementById('total-interviews').innerText = '0';
+            document.getElementById('revert-rate').innerText = '0%';
+            document.getElementById('table-body').innerHTML = '';
+            document.getElementById('empty-state').style.display = 'block';
+        }
+
+        function filterTable() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allData.filter(d => 
+                (d.Company || '').toLowerCase().includes(query) ||
+                (d.Job_Title || '').toLowerCase().includes(query) ||
+                (d.Location || '').toLowerCase().includes(query) ||
+                (d.Notes || '').toLowerCase().includes(query)
+            );
+            renderDashboard(filtered);
+        }
+
+        // Initial fetch
+        fetchData();
+    </script>
+</body>
+</html>
