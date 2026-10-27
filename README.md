@@ -36,7 +36,7 @@ An end-to-end automated job application pipeline, resume tailoring engine, inter
 ├── dashboard.html                        # Self-contained web tracker dashboard
 ├── serve_dashboard.py                    # Local HTTP server (port 5050)
 ├── auto_apply.py                         # Fills Greenhouse/Lever/Ashby forms from applicant.txt
-├── form_agent.py                         # Claude agent that answers every remaining form question
+├── form_agent.py                         # AI agent (Gemini or Claude) that answers every remaining form question
 ├── tailor_resume.py                      # Resume keyword & JD tailoring engine
 ├── add_50_hybrid_bangalore.py            # Adds 50 real hybrid Bangalore postings as To Apply
 ├── email_sender.py                       # Automated email application sender
@@ -99,7 +99,7 @@ python3 auto_apply.py                    # fills each form; you check it and cli
 ```
 It uploads your resume, answers standard questions and writes a short tailored "why this company" answer.
 
-**Claude form agent (`form_agent.py`):** with `pip install anthropic` and `ANTHROPIC_API_KEY` in `.env`, Claude reads your resume PDF and `applicant.txt` and answers every remaining question — dropdowns, radio buttons, checkbox groups, searchable dropdowns, consent boxes and custom free-text questions — using only facts from your resume. Fields matching "Never auto-fill" are never sent to Claude. Use `--no-ai` to turn it off. Each form costs roughly a few cents. Questions it can't answer and captchas are left for you. `--auto-submit` submits by itself when every required field is filled and there is no captcha. Successful applications are marked `Applied` and the CSV is pushed. Stretch / weak-fit roles are skipped unless you pass `--include-stretch`. Workday, company sites and aggregators are skipped — apply to those by hand.
+**AI form agent (`form_agent.py`):** with `pip install google-genai` and `GEMINI_API_KEY` in `.env` (Gemini 2.5 Flash), or `pip install anthropic` and `ANTHROPIC_API_KEY` (Claude), the AI reads your resume PDF and `applicant.txt` and answers every remaining question — dropdowns, radio buttons, checkbox groups, searchable dropdowns, consent boxes and custom free-text questions — using only facts from your resume. Fields matching "Never auto-fill" are never sent to Claude. Use `--no-ai` to turn it off. If both keys are set, choose with `AI_PROVIDER="gemini"` or `"claude"`. Questions it can't answer and captchas are left for you. `--auto-submit` submits by itself when every required field is filled and there is no captcha. Successful applications are marked `Applied` and the CSV is pushed. Stretch / weak-fit roles are skipped unless you pass `--include-stretch`. Workday, company sites and aggregators are skipped — apply to those by hand.
 
 ### 7. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:

@@ -17,9 +17,9 @@ Usage:
     python3 auto_apply.py --only 1,5,9      # only these Application_IDs
     python3 auto_apply.py --no-ai           # rule-based filling only, no Claude
 
-With `pip install anthropic` and ANTHROPIC_API_KEY set (in the environment or
-.env), Claude reads your resume and applicant.txt and answers every remaining
-question too: dropdowns, radio buttons, checkboxes, searchable dropdowns and
+With an AI key in .env (GEMINI_API_KEY + `pip install google-genai`, or
+ANTHROPIC_API_KEY + `pip install anthropic`), the AI reads your resume and
+applicant.txt and answers every remaining question too: dropdowns, radio buttons, checkboxes, searchable dropdowns and
 free-text questions (see form_agent.py).
 
 Workday, SmartRecruiters, company sites and aggregators are skipped: they need
@@ -332,13 +332,13 @@ def main():
     never = [s.strip().lower() for s in app.get("never auto-fill", "").split(",") if s.strip()]
     if "--no-ai" not in args:
         try:
-            from form_agent import FormAgent
+            from form_agent import make_agent
             with open(APPLICANT_FILE, encoding="utf-8") as f:
                 applicant_text = "\n".join(l for l in f.read().splitlines() if l.strip() and not l.startswith("#"))
-            agent = FormAgent(app, applicant_text, app["resume path"], ROOT_DIR)
-            log("🤖 Claude form agent on: every question will be answered from your resume")
+            agent = make_agent(app, applicant_text, app["resume path"], ROOT_DIR)
+            log(f"🤖 AI form agent on ({agent.name}): every question will be answered from your resume")
         except Exception as e:
-            log(f"⚠️  Claude form agent off ({e}). Install `anthropic` and set ANTHROPIC_API_KEY to enable it.")
+            log(f"⚠️  AI form agent off ({e}). Set GEMINI_API_KEY or ANTHROPIC_API_KEY in .env to enable it.")
     done = 0
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
