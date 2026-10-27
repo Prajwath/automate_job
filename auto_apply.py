@@ -15,6 +15,12 @@ Usage:
     python3 auto_apply.py --dry-run         # list what would be opened, change nothing
     python3 auto_apply.py --include-stretch # also apply to "Stretch" / "Weak fit" roles
     python3 auto_apply.py --only 1,5,9      # only these Application_IDs
+    python3 auto_apply.py --no-ai           # rule-based filling only, no Claude
+
+With `pip install anthropic` and ANTHROPIC_API_KEY set (in the environment or
+.env), Claude reads your resume and applicant.txt and answers every remaining
+question too: dropdowns, radio buttons, checkboxes, searchable dropdowns and
+free-text questions (see form_agent.py).
 
 Workday, SmartRecruiters, company sites and aggregators are skipped: they need
 accounts or redirect elsewhere, so apply to those by hand.
@@ -195,7 +201,8 @@ def fill_form(page, app, row):
                 log(f"   resume upload failed: {e}")
             break
 
-    for el in page.query_selector_all("input:not([type=hidden]):not([type=file]):not([type=submit]):not([type=checkbox]):not([type=radio]), textarea, select"):
+    # Searchable dropdowns (role=combobox) are left to the Claude agent: typing into them doesn't select anything.
+    for el in page.query_selector_all("input:not([type=hidden]):not([type=file]):not([type=submit]):not([type=checkbox]):not([type=radio]):not([role=combobox]), textarea, select"):
         try:
             if not el.is_visible() or not el.is_enabled():
                 continue
@@ -228,6 +235,10 @@ def fill_form(page, app, row):
         except Exception:
             continue
 
+    return required_missing(page)
+
+
+def required_missing(page):
     return page.evaluate(
         """() => [...document.querySelectorAll('input[required], textarea[required], select[required], [aria-required=true]')]
             .filter(e => e.offsetParent !== null && e.type !== 'hidden' && !e.value && !(e.type === 'file' && e.files && e.files.length))
@@ -317,6 +328,17 @@ def main():
     from playwright.sync_api import sync_playwright
 
     auto = "--auto-submit" in args
+    agent = None
+    never = [s.strip().lower() for s in app.get("never auto-fill", "").split(",") if s.strip()]
+    if "--no-ai" not in args:
+        try:
+            from form_agent import FormAgent
+            with open(APPLICANT_FILE, encoding="utf-8") as f:
+                applicant_text = "\n".join(l for l in f.read().splitlines() if l.strip() and not l.startswith("#"))
+            agent = FormAgent(app, applicant_text, app["resume path"], ROOT_DIR)
+            log("🤖 Claude form agent on: every question will be answered from your resume")
+        except Exception as e:
+            log(f"⚠️  Claude form agent off ({e}). Install `anthropic` and set ANTHROPIC_API_KEY to enable it.")
     done = 0
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
@@ -334,6 +356,17 @@ def main():
                 continue
 
             missing = fill_form(page, app, row)
+            if agent:
+                from form_agent import collect_fields, fill_answers
+                try:
+                    fields = collect_fields(page, never)
+                    if fields:
+                        answers = agent.answer(row, fields)
+                        failed = fill_answers(page, fields, answers, log)
+                        log(f"   🤖 answered {len(answers)} of {len(fields)} remaining questions" + (f", {len(failed)} could not be set" if failed else ""))
+                        missing = required_missing(page)
+                except Exception as e:
+                    log(f"   🤖 agent failed on this form: {e}")
             captcha = has_captcha(page)
             if missing:
                 log(f"   left for you: {', '.join(missing)[:300]}")
