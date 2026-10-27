@@ -8,6 +8,7 @@ Updates job_applications.csv and logs all activity.
 Usage:
     python3 notify_replies.py              # Single scan
     python3 notify_replies.py --watch      # Continuous monitoring (every 15 min)
+    python3 notify_replies.py --test-push  # Send a test phone push (needs NTFY_TOPIC)
     python3 notify_replies.py --dry-run    # Scan without updating CSV
 """
 
@@ -133,20 +134,23 @@ def send_desktop_notification(title, body, urgency="critical"):
 
 
 def send_phone_push(title, body):
-    """Optional phone push via ntfy.sh. Enabled only when NTFY_TOPIC is set in .env."""
+    """Optional phone push via ntfy. Enabled only when NTFY_TOPIC is set in .env."""
     topic = get_env_var("NTFY_TOPIC")
     if not topic:
-        return
+        return False
+    server = get_env_var("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
     try:
         req = urllib.request.Request(
-            f"https://ntfy.sh/{topic}",
+            f"{server}/{topic}",
             data=body.encode("utf-8"),
             headers={"Title": title.encode("utf-8").decode("latin-1", "ignore"), "Priority": "high", "Tags": "tada"},
         )
         urllib.request.urlopen(req, timeout=10)
         log(f"📱 Phone push sent: {title}")
+        return True
     except Exception as e:
         log(f"⚠️  Failed to send phone push: {e}")
+        return False
 
 
 def play_sound():
@@ -465,6 +469,13 @@ def watch_mode():
 
 
 def main():
+    if "--test-push" in sys.argv:
+        if not get_env_var("NTFY_TOPIC"):
+            print("NTFY_TOPIC is not set in .env")
+            sys.exit(1)
+        ok = send_phone_push("Job tracker test", "Phone push is working. You will get a push for each positive reply.")
+        sys.exit(0 if ok else 1)
+
     if "--watch" in sys.argv:
         watch_mode()
     else:

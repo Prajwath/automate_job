@@ -82,7 +82,15 @@ Run continuously in watch mode (every 15 minutes):
 python3 notify_replies.py --watch
 ```
 
-### 4. Enable Background Service (Systemd)
+### 4. Phone Alerts for Positive Replies (optional)
+Get a push on your phone when a positive reply arrives, using [ntfy](https://ntfy.sh):
+1. Install the ntfy app and subscribe to a long, random topic name.
+2. Add it to `.env`: `NTFY_TOPIC="your-random-topic"` (topics have no password, so don't use a guessable name).
+3. Test it: `python3 notify_replies.py --test-push`
+
+The dashboard also has a **🔔 Alerts** button that shows a browser notification for new positive replies while the page is open. The By batch / By channel analysis panels are hidden; add `?analysis=1` to the dashboard URL to show them.
+
+### 5. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:
 ```bash
 mkdir -p ~/.config/systemd/user
