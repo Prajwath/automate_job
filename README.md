@@ -6,11 +6,9 @@ An end-to-end automated job application pipeline, resume tailoring engine, inter
 
 ## 🌟 Key Features
 
-1. **Targeted Job Application Pipeline (205 Applications Tracked)**
-   - **Cohort 1:** 50 Top Bangalore Tech & Product Companies (Anthropic, Mistral AI, Cohere, PhonePe, Infosys BPM, etc.)
-   - **Cohort 2:** 50 Growing Mid-Size Tech Firms (Zeta, Observe.AI, Yellow.ai, Innovaccer, MoEngage, etc.)
-   - **Cohort 3:** 50 High-Growth Funded Startups (Portkey.ai, TrueFoundry, Composio.ai, Sarvam AI, Krutrim, etc.)
-   - **Cohort 4:** 50 Tier-1 Goodies & High-Perk Companies (Google, Microsoft, Apple, Meta, Flipkart, Swiggy, CRED, Razorpay, etc.)
+1. **Job Tracker (`job_applications.csv`)**
+   - 50 real hybrid Bangalore postings (`add_50_hybrid_bangalore.py`), each with a link and a fit note (Strong fit / Good fit / Stretch / Weak fit).
+   - New roles start as **To Apply**; set Status to `Applied` and fill `Date_Applied` once you submit.
 
 2. **Resume Tailoring Engine (`tailor_resume.py`)**
    - Extracts job descriptions and aligns specific technical competencies (FinBERT, RAG pipelines, OCR, multi-agent AI, Python/FastAPI microservices).
@@ -33,15 +31,12 @@ An end-to-end automated job application pipeline, resume tailoring engine, inter
 ## 📂 Project Architecture
 
 ```
-├── job_applications.csv                  # Master CSV tracking all 205 applications
+├── job_applications.csv                  # Master CSV of tracked roles
 ├── candidate_profile.json                # Structured candidate profile & skills data
 ├── dashboard.html                        # Self-contained web tracker dashboard
 ├── serve_dashboard.py                    # Local HTTP server (port 5050)
 ├── tailor_resume.py                      # Resume keyword & JD tailoring engine
-├── generate_50_bangalore_applications.py # Batch 1 generator: Bangalore tech
-├── expand_to_100_applications.py         # Batch 2 generator: Mid-size firms
-├── add_50_startups.py                    # Batch 3 generator: Funded startups
-├── add_50_goodies_companies.py           # Batch 4 generator: High-perk companies
+├── add_50_hybrid_bangalore.py            # Adds 50 real hybrid Bangalore postings as To Apply
 ├── email_sender.py                       # Automated email application sender
 ├── check_replies.py                      # One-shot IMAP inbox reply scanner
 ├── notify_replies.py                     # Real-time daemon with desktop alerts
@@ -124,12 +119,7 @@ systemctl --user enable --now job-reply-monitor.service
 
 ## 📊 Summary of Tracked Applications
 
-| Cohort | Application IDs | Count | Focus |
+| Group | Application IDs | Count | Status |
 |---|---|---|---|
-| Bangalore Established Tech | 1–50 | 50 | Product & Enterprise |
-| Mid-Size Growing Tech | 51–100 | 50 | SaaS, Platform & FinTech |
-| Additional Direct Additions | 101–105 | 5 | Targeted High-LPA Roles |
-| Funded AI & Tech Startups | 106–155 | 50 | LLM, GenAI, MLOps, Backend |
-| Joining Goodies & High Perks | 156–205 | 50 | MacBooks, Devices, Top Perks |
-| Hybrid Bangalore (real postings, **To Apply**) | 206–255 | 50 | Found via web search Oct 2026; not yet applied |
-| **Total** | | **255** | **Target CTC: ₹12–15 LPA** |
+| Hybrid Bangalore (real postings) | 1–50 | 50 | To Apply — found via web search, Oct 2026 |
+| **Total** | | **50** | **Target CTC: ₹12–15 LPA** |

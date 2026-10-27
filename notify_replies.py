@@ -471,7 +471,9 @@ def watch_mode():
     log("=" * 60)
     log("🔔 REPLY MONITOR STARTED — Watching for company responses")
     log(f"   Scanning every {SCAN_INTERVAL // 60} minutes")
-    log(f"   Tracking 205 companies from {CSV_FILE}")
+    with open(CSV_FILE, newline="", encoding="utf-8") as f:
+        tracked = sum(1 for _ in csv.DictReader(f))
+    log(f"   Tracking {tracked} applications from {CSV_FILE}")
     log(f"   Notifications: Desktop (notify-send)")
     log(f"   Log file: {LOG_FILE}")
     log("=" * 60)
