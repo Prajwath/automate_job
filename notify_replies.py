@@ -153,6 +153,45 @@ def send_phone_push(title, body):
         return False
 
 
+def git(*args):
+    return subprocess.run(["git", "-C", ROOT_DIR, *args], capture_output=True, text=True, timeout=120)
+
+
+def push_csv_to_github():
+    """Commit job_applications.csv and push it so the live dashboard updates.
+
+    Runs after every scan. Disable with AUTO_PUSH="false" in .env. A failed push is
+    retried on the next scan because the local commit is kept.
+    """
+    if get_env_var("AUTO_PUSH", "true").lower() in ("false", "0", "no"):
+        return
+    try:
+        if git("rev-parse", "--is-inside-work-tree").returncode != 0:
+            log("⚠️  Auto-push skipped: project folder is not a git repository")
+            return
+        if git("status", "--porcelain", "--", "job_applications.csv").stdout.strip():
+            git("add", "--", "job_applications.csv")
+            msg = f"Update application replies ({datetime.now().strftime('%Y-%m-%d %H:%M')})"
+            commit = git("commit", "-m", msg, "--", "job_applications.csv")
+            if commit.returncode != 0:
+                log(f"⚠️  Auto-push: commit failed: {(commit.stderr or commit.stdout).strip()[:200]}")
+                return
+        if "ahead" not in git("status", "-sb").stdout.splitlines()[0]:
+            return
+        pull = git("pull", "--rebase", "--autostash", "-q")
+        if pull.returncode != 0:
+            git("rebase", "--abort")
+            log(f"⚠️  Auto-push: pull failed, will retry next scan: {pull.stderr.strip()[:200]}")
+            return
+        push = git("push", "-q")
+        if push.returncode != 0:
+            log(f"⚠️  Auto-push: push failed, will retry next scan: {push.stderr.strip()[:200]}")
+            return
+        log("☁️  Pushed job_applications.csv to GitHub — live dashboard will update shortly")
+    except Exception as e:
+        log(f"⚠️  Auto-push failed: {e}")
+
+
 def play_sound():
     """Play a notification sound if available."""
     try:
@@ -406,6 +445,9 @@ def scan_inbox(dry_run=False):
             writer.writeheader()
             writer.writerows(reader)
         log(f"\n✅ Updated {reverts_found} applications in CSV!")
+
+    if not dry_run:
+        push_csv_to_github()
 
     # Summary notification
     positive_count = sum(1 for r in new_responses if r["is_positive"])

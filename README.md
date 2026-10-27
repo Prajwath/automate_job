@@ -90,7 +90,10 @@ Get a push on your phone when a positive reply arrives, using [ntfy](https://ntf
 
 The dashboard also has a **🔔 Alerts** button that shows a browser notification for new positive replies while the page is open. The By batch / By channel analysis panels are hidden; add `?analysis=1` to the dashboard URL to show them.
 
-### 5. Enable Background Service (Systemd)
+### 5. Keep the Live Dashboard Updated
+After each scan, `notify_replies.py` commits and pushes `job_applications.csv` to GitHub when replies were found, so the GitHub Pages / Vercel dashboard updates automatically. The project folder must be a git clone that can push without a password prompt (SSH key or saved credentials). If a push fails, it is retried on the next scan. The repo is public, so reply statuses become public; set `AUTO_PUSH="false"` in `.env` to turn this off.
+
+### 6. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:
 ```bash
 mkdir -p ~/.config/systemd/user
