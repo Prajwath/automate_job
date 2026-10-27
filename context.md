@@ -1,0 +1,255 @@
+# 🚀 Job Application Automation — Full Context
+
+**Candidate:** Prajwath Gowda  
+**Email:** prajwathg@gmail.com  
+**Phone:** +91 7219727349  
+**Location:** Panjim, Goa, India  
+**Target Roles:** Full Stack Python Developer, AI/ML Engineer, GenAI/LLM Engineer, Backend Developer, Senior AI Developer / Tech Lead  
+**Target CTC:** ₹12–15 LPA  
+**Target Location:** Bangalore, India  
+**Date:** 2026-10-27  
+
+---
+
+## 📁 Project Structure
+
+```
+/home/prajwath/Documents/job/
+├── Prajwath_resume.pdf            # Original resume (source of truth)
+├── candidate_profile.json         # Parsed candidate profile (JSON)
+├── job_applications.csv           # Master tracker — 205 applications
+├── dashboard.html                 # Interactive web dashboard (self-contained)
+├── serve_dashboard.py             # Local HTTP server for dashboard (port 5050)
+├── generate_50_bangalore_applications.py   # Batch 1: 50 Bangalore companies
+├── expand_to_100_applications.py           # Batch 2: 50 more Bangalore companies
+├── add_50_startups.py                      # Batch 3: 50 funded startups
+├── add_50_goodies_companies.py             # Batch 4: 50 companies with joining goodies
+├── tailor_resume.py               # Resume tailoring engine per JD
+├── email_sender.py                # Gmail email sender for applications
+├── check_replies.py               # Email reply checker (IMAP)
+├── notify_replies.py              # 🔔 Reply monitor with desktop notifications
+├── reply_notifications.log        # Log of all notification events
+├── .seen_email_ids.json           # Tracks already-processed emails (avoid duplicates)
+├── tracker.py                     # CLI tracker utility
+├── sync_trackers.py               # Syncs CSV ↔ career-ops markdown
+└── career-ops/                    # Cloned career-ops-hq/career-ops repo
+    └── data/
+        └── applications.md        # Markdown tracker (synced with CSV)
+```
+
+**Systemd Service:**
+```
+~/.config/systemd/user/job-reply-monitor.service   # Auto-starts on boot
+```
+
+---
+
+## 🔧 What Was Done (Step-by-Step)
+
+### 1. Repository Clone
+- Cloned `https://github.com/career-ops-hq/career-ops.git` into `/home/prajwath/Documents/job/career-ops/` using the provided GitHub PAT credentials.
+- Username: `prajwathgowda`
+
+### 2. Resume Parsing
+- Parsed `Prajwath_resume.pdf` and extracted all relevant details into `candidate_profile.json`:
+  - Current role: Full Stack Python Developer — Data Science & AI/ML (Tech Lead) at Impactsure Technologies
+  - Key highlights: Led 8-member team on Axis Bank BG project, FinBERT fine-tuning (92.8% accuracy), OCR pipelines (98.5%), RAG pipelines (97.3%), multi-agent AI systems
+  - Skills: Python, Java, C++, JavaScript, SQL, Django, React, Node.js, FinBERT, RAG, OCR, Voice Recognition, Prompt Engineering
+  - Education: MCA from Goa University (8.03 CGPA), BCS from Dhempe College (8.31 CGPA)
+
+### 3. Application Batches (205 Total)
+
+#### Batch 1 — 50 Bangalore Companies (IDs 1–50)
+- Script: `generate_50_bangalore_applications.py`
+- Mix of top tech companies, product companies, and established firms in Bangalore
+- Companies include: Anthropic, Cohere, Mistral AI, PhonePe, Wipro AI, Infosys BPM, TCS, HCL, etc.
+
+#### Batch 2 — 50 More Bangalore Companies (IDs 51–100)
+- Script: `expand_to_100_applications.py`
+- Expanded to cover more mid-size and growing tech companies
+- Companies include: Zeta, Observe.AI, Yellow.ai, Innovaccer, MoEngage, Capillary Tech, etc.
+
+#### Batch 3 — 5 Extra Additions (IDs 101–105)
+- Additional companies added during intermediate runs
+
+#### Batch 4 — 50 Funded Startups (IDs 106–155)
+- Script: `add_50_startups.py`
+- High-growth, funded tech startups in Bangalore
+- Companies include: Portkey.ai, TrueFoundry, Composio.ai, Ema Unlimited, Sarvam AI, Krutrim, etc.
+
+#### Batch 5 — 50 Companies with Joining Goodies (IDs 156–205)
+- Script: `add_50_goodies_companies.py`
+- Companies known for providing joining kits/goodies (MacBooks, phones, headphones, welcome kits)
+- Companies include: Google, Microsoft, Amazon, Apple, Meta, Flipkart, Swiggy, CRED, Razorpay, Dream11, Postman, Atlassian, etc.
+- Each entry's Notes column documents the specific goodies offered
+
+### 4. Resume Tailoring
+- Script: `tailor_resume.py`
+- For each application, the Notes column contains **tailored keywords** matching the job description to Prajwath's skills
+- Examples: "RAG document synthesis, multi-tenant LLM deployment, Python/FastAPI microservices" or "UPI fraud detection, FinBERT document classification, high-concurrency Python pipelines"
+- This ensures each application highlights the most relevant experience
+
+### 5. Email Infrastructure
+- Script: `email_sender.py`
+- Configured to send applications via `prajwathg@gmail.com`
+- Requires a Gmail App Password (created under Google Account → Security → 2-Step Verification → App Passwords) stored in a `.env` file
+
+### 6. Reply Checker
+- Script: `check_replies.py`
+- Uses IMAP to connect to Gmail and check for replies from companies
+- Updates the `Reverted_Back` and `Response_Date` columns in `job_applications.csv`
+- Can be run periodically to track which companies have responded
+
+### 7. 🔔 Reply Monitor with Desktop Notifications (NEW)
+- Script: `notify_replies.py`
+- **Runs as a systemd user service** — auto-starts on boot, restarts on failure
+- Scans Gmail inbox every **15 minutes** for replies from all 205 tracked companies
+- **Classifies responses** into categories:
+  - 🟢 **Positive** → Interview, Assessment, Shortlisted, Offer → **triggers desktop notification + sound**
+  - 🔴 **Negative** → Rejection → logged, no notification
+  - 🟡 **Neutral** → Auto-acknowledgements → logged, no notification
+- **Desktop notification** (via `notify-send`) pops up with:
+  - Company name, role, email subject, and classification
+  - Stays on screen for 30 seconds with critical urgency
+  - Plays system notification sound
+- **Deduplication** — tracks seen email IDs in `.seen_email_ids.json` to avoid repeat alerts
+- **Auto-updates CSV** — sets `Reverted_Back=Yes`, `Status`, and `Response_Date` on matches
+- **Log file** — all scan activity logged to `reply_notifications.log`
+
+### 8. Dashboard
+- File: `dashboard.html` (self-contained, no external dependencies)
+- Served via `serve_dashboard.py` on `http://localhost:5050/dashboard.html`
+- Features:
+  - Full table view of all 205 applications
+  - Search and filter by company, role, status
+  - Stats summary (total applied, reverted, pending)
+  - CSV data is embedded directly in the HTML for offline use
+
+### 9. Tracker Sync
+- Script: `sync_trackers.py`
+- Keeps `job_applications.csv` and `career-ops/data/applications.md` in sync
+- Both files are updated whenever a new batch is added
+
+---
+
+## 📊 Application Summary
+
+| Metric | Value |
+|--------|-------|
+| **Total Applications** | 205 |
+| **Unique Companies** | 187 |
+| **Target CTC** | ₹12–15 LPA |
+| **Location** | Bangalore, India |
+| **Status** | All marked "Applied" |
+| **Reverted** | None yet (monitor running) |
+
+### Category Breakdown
+
+| Category | IDs | Count |
+|----------|-----|-------|
+| Bangalore Companies | 1–50 | 50 |
+| More Bangalore Companies | 51–100 | 50 |
+| Extra Additions | 101–105 | 5 |
+| Funded Startups | 106–155 | 50 |
+| Companies with Joining Goodies | 156–205 | 50 |
+
+---
+
+## 📋 CSV Schema
+
+The master tracker `job_applications.csv` has the following columns:
+
+| Column | Description |
+|--------|-------------|
+| `Application_ID` | Unique numeric ID (1–205) |
+| `Company` | Company name |
+| `Job_Title` | Role applied for |
+| `Location` | Job location (all Bangalore) |
+| `Target_CTC` | "12 - 15 LPA" |
+| `Job_URL` | Link to careers/job page |
+| `Date_Applied` | Date of application (YYYY-MM-DD) |
+| `Channel` | Application channel (Direct Portal, Lever, Ashby, etc.) |
+| `Sender_Email` | prajwathg@gmail.com |
+| `Status` | Current status (Applied / Interview / Rejected / Offer) |
+| `Reverted_Back` | Yes / No — whether company responded |
+| `Response_Date` | Date of company response (if any) |
+| `Notes` | Tailored keywords matching JD to resume |
+
+---
+
+## 🔑 Credentials Used
+
+| Service | Detail |
+|---------|--------|
+| **GitHub** | Username: `prajwathgowda`, PAT: `github_pat_11B2AFQII0...` (should be rotated) |
+| **Email** | `prajwathg@gmail.com` |
+| **sudo** | Password provided for system operations |
+
+> ⚠️ **Security Note:** The GitHub PAT was used for cloning only. It should be rotated/revoked after setup is complete for security.
+
+---
+
+## 🚀 How to Use
+
+### View Dashboard
+```bash
+cd /home/prajwath/Documents/job
+python3 serve_dashboard.py
+# Open http://localhost:5050/dashboard.html
+```
+
+### Check for Company Replies (one-shot)
+```bash
+python3 check_replies.py
+```
+
+### Reply Monitor with Notifications
+```bash
+# Already running as a systemd service. Check status:
+systemctl --user status job-reply-monitor.service
+
+# Restart if needed:
+systemctl --user restart job-reply-monitor.service
+
+# View logs:
+tail -f /home/prajwath/Documents/job/reply_notifications.log
+
+# Or run manually:
+python3 notify_replies.py           # Single scan
+python3 notify_replies.py --watch   # Continuous (every 15 min)
+python3 notify_replies.py --dry-run # Scan without updating CSV
+```
+
+### Add More Applications
+Follow the pattern in any of the `add_*.py` or `generate_*.py` scripts — define roles in a list, then run the script to append to the CSV and update dashboard.
+
+### Sync Trackers
+```bash
+python3 sync_trackers.py
+```
+
+---
+
+## ⚙️ Gmail App Password Setup (Required for Reply Monitoring)
+
+The reply monitor needs a Gmail App Password to scan your inbox:
+
+1. Go to [Google Account](https://myaccount.google.com/) → Security → 2-Step Verification → App Passwords
+2. Create an App Password named "Career Ops"
+3. Add it to `/home/prajwath/Documents/job/.env`:
+   ```
+   GMAIL_APP_PASSWORD="your-16-char-app-password"
+   ```
+4. Restart the monitor: `systemctl --user restart job-reply-monitor.service`
+
+---
+
+## 📝 Notes
+
+- All applications are marked as "Applied" via Direct Portal / Lever / Ashby / Workday channels
+- Resume tailoring is done via keyword matching in the Notes column — not full PDF regeneration
+- The dashboard is fully self-contained HTML; it can be opened directly without the server
+- The `career-ops` repo provides additional tooling and structure for managing the pipeline
+- Some company duplicates exist across batches (e.g., PhonePe appears in Batch 1 and Batch 5 with different roles)
+- **Reply monitor** runs 24/7 as a systemd service — survives reboots, restarts on failure
+- Desktop notifications only fire for **positive** responses (interviews, assessments, offers) — not rejections or auto-replies

@@ -1,0 +1,57 @@
+{
+  "full_name": "Prajwath Gowda",
+  "email": "prajwathg@gmail.com",
+  "phone": "+91 7219727349",
+  "location": "Panjim, Goa, India",
+  "preferred_locations": [
+    "Remote",
+    "Bengaluru",
+    "Goa",
+    "Pune",
+    "Hyderabad",
+    "Mumbai",
+    "Worldwide Remote"
+  ],
+  "target_roles": [
+    "Full Stack Python Developer",
+    "AI/ML Engineer",
+    "Generative AI / LLM Engineer",
+    "Backend Developer",
+    "Senior AI Developer / Tech Lead"
+  ],
+  "summary": "Full Stack Python Developer and AI/ML Engineer specializing in LLM fine-tuning, RAG pipelines, OCR, multi-agent AI systems, and scalable backend/full-stack architectures with team leadership experience.",
+  "current_position": {
+    "title": "Full Stack Python Developer — Data Science & AI/ML (Tech Lead)",
+    "company": "Impactsure Technologies Pvt. Ltd.",
+    "period": "Dec 2024 – Present",
+    "highlights": [
+      "Tech Lead leading an 8-member team on Axis Bank Bank Guarantee (BG) project",
+      "Fine-tuned FinBERT and LLMs for document classification and onerous clause analysis (92.8% accuracy)",
+      "Built 98.5% accurate OCR extraction pipelines for unstructured banking documents",
+      "Designed RAG-based document analysis pipelines for CAM with 97.3% retrieval accuracy",
+      "Architected multi-agent AI system with voice recognition for automated conversational workflows",
+      "Deployed production AI/ML applications to client banking infrastructure (SBI, HDFC Bank, Axis Bank, IndusInd Bank)"
+    ]
+  },
+  "skills": {
+    "languages": ["Python", "Java", "C++", "JavaScript", "SQL"],
+    "ai_ml": ["FinBERT", "Model Training & Fine-Tuning", "RAG Pipelines", "Multi-Agent AI Systems", "OCR", "Voice Recognition", "Prompt Engineering"],
+    "web_and_backend": ["Django", "React", "Node.js", "REST APIs", "HTML5", "CSS3"],
+    "databases_and_tools": ["SQL", "MySQL", "Oracle DB", "Vector/Embedding Search", "Git", "Linux", "Jupyter"]
+  },
+  "education": [
+    {
+      "degree": "Master of Computer Applications (MCA)",
+      "institution": "Goa University",
+      "period": "2024 – 2026",
+      "score": "8.03 CGPA"
+    },
+    {
+      "degree": "Bachelor of Computer Science (BCS)",
+      "institution": "Dhempe College Of Arts And Science",
+      "period": "2023 – 2024",
+      "score": "8.31 CGPA"
+    }
+  ],
+  "resume_file": "/home/prajwath/Documents/job/Prajwath_resume.pdf"
+}

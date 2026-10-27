@@ -1,0 +1,42 @@
+# Environment and sensitive keys
+.env
+.env.*
+!.env.example
+.envrc
+
+# Logs and runtime caches
+*.log
+reply_notifications.log
+.seen_email_ids.json
+
+# External sub-repositories and heavy vendor dependencies
+career-ops/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# OS artifacts
+.DS_Store
+Thumbs.db
