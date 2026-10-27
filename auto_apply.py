@@ -328,6 +328,9 @@ def main():
     from playwright.sync_api import sync_playwright
 
     auto = "--auto-submit" in args
+    from email_otp import handle_otp
+    from notify_replies import get_env_var
+    gmail_password = get_env_var("GMAIL_APP_PASSWORD")
     agent = None
     never = [s.strip().lower() for s in app.get("never auto-fill", "").split(",") if s.strip()]
     if "--no-ai" not in args:
@@ -373,9 +376,14 @@ def main():
 
             if auto and not missing and not captcha:
                 start = page.url
+                since = datetime.now()
                 click_submit(page)
                 time.sleep(5)
                 ok = submitted(page, start)
+                if not ok and handle_otp(page, app["email"], gmail_password, since, row["Company"], log):
+                    click_submit(page)
+                    time.sleep(5)
+                    ok = submitted(page, start)
             else:
                 if auto:
                     log("   needs you: " + ("captcha" if captcha else "required questions"))
