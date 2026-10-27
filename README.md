@@ -35,6 +35,7 @@ An end-to-end automated job application pipeline, resume tailoring engine, inter
 ├── candidate_profile.json                # Structured candidate profile & skills data
 ├── dashboard.html                        # Self-contained web tracker dashboard
 ├── serve_dashboard.py                    # Local HTTP server (port 5050)
+├── auto_apply.py                         # Fills Greenhouse/Lever/Ashby forms from applicant.txt
 ├── tailor_resume.py                      # Resume keyword & JD tailoring engine
 ├── add_50_hybrid_bangalore.py            # Adds 50 real hybrid Bangalore postings as To Apply
 ├── email_sender.py                       # Automated email application sender
@@ -88,7 +89,16 @@ The dashboard also has a **🔔 Alerts** button that shows a browser notificatio
 ### 5. Keep the Live Dashboard Updated
 After each scan, `notify_replies.py` commits and pushes `job_applications.csv` to GitHub when replies were found, so the GitHub Pages / Vercel dashboard updates automatically. The project folder must be a git clone that can push without a password prompt (SSH key or saved credentials). If a push fails, it is retried on the next scan. The repo is public, so reply statuses become public; set `AUTO_PUSH="false"` in `.env` to turn this off.
 
-### 6. Enable Background Service (Systemd)
+### 6. Fill Applications Automatically (Greenhouse, Lever, Ashby)
+```bash
+pip install playwright && python3 -m playwright install chromium
+cp applicant.example.txt applicant.txt   # fill in your details (git-ignored)
+python3 auto_apply.py --dry-run          # see which roles it will open
+python3 auto_apply.py                    # fills each form; you check it and click Submit
+```
+It uploads your resume, answers standard questions and writes a short tailored "why this company" answer. Questions it can't answer and captchas are left for you. `--auto-submit` submits by itself when every required field is filled and there is no captcha. Successful applications are marked `Applied` and the CSV is pushed. Stretch / weak-fit roles are skipped unless you pass `--include-stretch`. Workday, company sites and aggregators are skipped — apply to those by hand.
+
+### 7. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:
 ```bash
 mkdir -p ~/.config/systemd/user

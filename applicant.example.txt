@@ -1,0 +1,29 @@
+# Copy to applicant.txt (git-ignored) and fill in. One "Key: value" per line.
+# Leave a value empty to never fill that question. Never put passwords here.
+Full name:
+Email:
+Phone:
+Current location:
+Willing to relocate:
+Hybrid OK:
+LinkedIn:
+GitHub:
+Portfolio:
+Current company:
+Current title:
+Total experience:
+Relevant experience:
+Current CTC:
+Expected CTC:
+Notice period:
+Degree:
+Work authorization:
+Visa sponsorship:
+Gender:
+Heard about us:
+# Optional custom answer for "why this company" / cover-letter questions.
+# Placeholders: {company} {title} {notes} {current_company}. Leave empty for the built-in tailored answer.
+Why this company:
+# Comma-separated words; any question whose label contains one is left for you.
+Never auto-fill:
+Resume path: Prajwath_resume.pdf

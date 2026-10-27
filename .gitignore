@@ -40,3 +40,7 @@ wheels/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Personal details and logs for auto_apply.py
+applicant.txt
+auto_apply.log
