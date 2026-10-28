@@ -447,6 +447,9 @@ def scan_inbox(dry_run=False):
         log(f"\n✅ Updated {reverts_found} applications in CSV!")
 
     if not dry_run:
+        # Apply "Mark applied" / "Skip" taps from phone notifications before pushing
+        from phone_actions import process_phone_actions
+        process_phone_actions()
         push_csv_to_github()
 
     # Summary notification

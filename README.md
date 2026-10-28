@@ -37,6 +37,9 @@ An end-to-end automated job application pipeline, resume tailoring engine, inter
 ├── serve_dashboard.py                    # Local HTTP server (port 5050)
 ├── auto_apply.py                         # Fills Greenhouse/Lever/Ashby forms from applicant.txt
 ├── email_otp.py                          # Reads emailed verification codes from Gmail and enters them
+├── discover_jobs.py                      # Finds new 1-4 yr hybrid Bangalore roles from companies.txt
+├── phone_actions.py                      # Phone hand-off: ntfy buttons to open, mark applied or skip
+├── daily_run.sh / setup_daily.sh         # Daily 10:00 autopilot and its installer
 ├── form_agent.py                         # AI agent (Gemini or Claude) that answers every remaining form question
 ├── tailor_resume.py                      # Resume keyword & JD tailoring engine
 ├── add_50_hybrid_bangalore.py            # Adds 50 real hybrid Bangalore postings as To Apply
@@ -104,7 +107,20 @@ It uploads your resume, answers standard questions and writes a short tailored "
 
 **Email verification codes (`email_otp.py`):** in `--auto-submit` mode, if a form asks for a code emailed to you after Submit, the script reads it from your Gmail (needs `GMAIL_APP_PASSWORD` in `.env`, same as the reply monitor), types it in and submits again. SMS codes and captchas still need you. If both keys are set, choose with `AI_PROVIDER="gemini"` or `"claude"`. Questions it can't answer and captchas are left for you. `--auto-submit` submits by itself when every required field is filled and there is no captcha. Successful applications are marked `Applied` and the CSV is pushed. Stretch / weak-fit roles are skipped unless you pass `--include-stretch`. Workday, company sites and aggregators are skipped — apply to those by hand.
 
-### 7. Enable Background Service (Systemd)
+### 7. Daily Autopilot at 10:00 (with phone hand-off)
+```bash
+bash setup_daily.sh          # installs a systemd timer; runs daily at 10:00 (or at next boot if missed)
+systemctl --user start job-daily.service   # run once now; log in daily_run.log
+```
+Each day `daily_run.sh`:
+1. applies your phone taps (**Mark applied** / **Skip**),
+2. finds new hybrid Bangalore roles needing 1–4 years on the boards in `companies.txt` (`discover_jobs.py`),
+3. fills and submits applications in the background (`auto_apply.py --unattended --junior-only`), including emailed verification codes,
+4. pushes the tracker so the dashboard updates, and sends a summary to your phone.
+
+Anything that needs you — a captcha, a question the AI couldn't answer, Workday or other sites — is marked **Needs You** and sent to your phone (ntfy) with **Open form**, **Mark applied** and **Skip** buttons. Finish the form in your phone's browser, then tap **Mark applied**. Taps are picked up by the reply monitor within 15 minutes, or by the next daily run. Add or remove companies in `companies.txt`. Remove the schedule with `bash setup_daily.sh --remove`.
+
+### 8. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:
 ```bash
 mkdir -p ~/.config/systemd/user

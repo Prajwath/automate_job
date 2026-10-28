@@ -15,7 +15,9 @@ Usage:
     python3 auto_apply.py --dry-run         # list what would be opened, change nothing
     python3 auto_apply.py --include-stretch # also apply to "Stretch" / "Weak fit" roles
     python3 auto_apply.py --only 1,5,9      # only these Application_IDs
-    python3 auto_apply.py --no-ai           # rule-based filling only, no Claude
+    python3 auto_apply.py --no-ai           # rule-based filling only, no AI
+    python3 auto_apply.py --unattended --junior-only  # daily run: headless, never waits for
+                                            # input; forms that need you go to your phone
 
 With an AI key in .env (GEMINI_API_KEY + `pip install google-genai`, or
 ANTHROPIC_API_KEY + `pip install anthropic`), the AI reads your resume and
@@ -37,6 +39,9 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_FILE = os.path.join(ROOT_DIR, "job_applications.csv")
 APPLICANT_FILE = os.path.join(ROOT_DIR, "applicant.txt")
 LOG_FILE = os.path.join(ROOT_DIR, "auto_apply.log")
+
+MAX_HANDOFFS_PER_RUN = 5
+TOO_SENIOR = re.compile(r"\b(senior|sr\.?|staff|principal|lead|manager|director|head|architect|vp|chief)\b", re.I)
 
 SUPPORTED = {
     "job-boards.greenhouse.io": "greenhouse",
@@ -268,14 +273,17 @@ def click_submit(page):
 
 
 def mark_applied(row_id, email):
+    set_status(row_id, "Applied", Date_Applied=datetime.now().strftime("%Y-%m-%d"), Sender_Email=email)
+
+
+def set_status(row_id, status, **fields):
     with open(CSV_FILE, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         fieldnames, rows = reader.fieldnames, list(reader)
     for r in rows:
         if r["Application_ID"] == row_id:
-            r["Status"] = "Applied"
-            r["Date_Applied"] = datetime.now().strftime("%Y-%m-%d")
-            r["Sender_Email"] = email
+            r["Status"] = status
+            r.update(fields)
     with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -288,7 +296,7 @@ def pick_rows(args):
     only = None
     if "--only" in args:
         only = set(args[args.index("--only") + 1].split(","))
-    out, skipped = [], []
+    out, skipped, hand_off = [], [], []
     for r in rows:
         if r["Status"].strip().lower() != "to apply":
             continue
@@ -298,22 +306,31 @@ def pick_rows(args):
         if not only and "--include-stretch" not in args and notes.startswith(("stretch", "weak fit")):
             skipped.append((r, "stretch/weak fit"))
             continue
+        if not only and "--junior-only" in args:
+            from discover_jobs import min_years_required, MAX_YEARS
+            years = min_years_required(r.get("Notes", ""))
+            if TOO_SENIOR.search(r["Job_Title"]) or (years and years > MAX_YEARS):
+                skipped.append((r, "senior role, above 1-4 years"))
+                continue
         platform = platform_of(r["Job_URL"])
         if not platform:
             skipped.append((r, "platform not supported, apply by hand"))
+            hand_off.append(r)
             continue
         url_path = re.sub(r"^https?://[^/]+/?", "", r["Job_URL"].split("?")[0]).strip("/")
         if url_path.count("/") < 1:
             skipped.append((r, "board link, not a single posting"))
+            hand_off.append(r)
             continue
         out.append((r, platform))
-    return out, skipped
+    return out, skipped, hand_off
 
 
 def main():
     args = sys.argv[1:]
     app = load_applicant()
-    todo, skipped = pick_rows(args)
+    todo, skipped, hand_off = pick_rows(args)
+    unattended = "--unattended" in args
 
     print(f"\n{len(todo)} applications to fill, {len(skipped)} skipped:")
     for r, why in skipped:
@@ -322,12 +339,24 @@ def main():
         for r, platform in todo:
             print(f"  + #{r['Application_ID']} {r['Company']} — {r['Job_Title']} [{platform}] {apply_url(r['Job_URL'], platform)}")
         return
+    needs_you = 0
+    if unattended:
+        # Rows the script can't fill (Workday, aggregators, board links) go straight to your phone,
+        # a few per day so notifications stay manageable.
+        from phone_actions import send_needs_you
+        for r in hand_off[:MAX_HANDOFFS_PER_RUN]:
+            if send_needs_you(r, "this site needs you to apply by hand"):
+                set_status(r["Application_ID"], "Needs You")
+                needs_you += 1
     if not todo:
-        return
+        if unattended:
+            from phone_actions import send_summary
+            send_summary(f"No forms to fill today. {needs_you} sent to your phone.")
+        return 0, needs_you
 
     from playwright.sync_api import sync_playwright
 
-    auto = "--auto-submit" in args
+    auto = "--auto-submit" in args or unattended
     from email_otp import handle_otp
     from notify_replies import get_env_var
     gmail_password = get_env_var("GMAIL_APP_PASSWORD")
@@ -344,7 +373,7 @@ def main():
             log(f"⚠️  AI form agent off ({e}). Set GEMINI_API_KEY or ANTHROPIC_API_KEY in .env to enable it.")
     done = 0
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=unattended)
         page = browser.new_page()
         for i, (row, platform) in enumerate(todo, 1):
             url = apply_url(row["Job_URL"], platform)
@@ -384,6 +413,14 @@ def main():
                     click_submit(page)
                     time.sleep(5)
                     ok = submitted(page, start)
+            elif unattended:
+                reason = "captcha" if captcha else "unanswered: " + ", ".join(missing)[:120]
+                log(f"   needs you ({reason}) — sent to your phone")
+                from phone_actions import send_needs_you
+                send_needs_you(row, reason)
+                set_status(row["Application_ID"], "Needs You")
+                needs_you += 1
+                continue
             else:
                 if auto:
                     log("   needs you: " + ("captcha" if captcha else "required questions"))
@@ -399,11 +436,20 @@ def main():
                 mark_applied(row["Application_ID"], app["email"])
                 done += 1
                 log("   ✅ marked Applied")
+            elif unattended:
+                log("   ⚠️  not confirmed as submitted — sent to your phone to check")
+                from phone_actions import send_needs_you
+                send_needs_you(row, "couldn't confirm it submitted; check the form")
+                set_status(row["Application_ID"], "Needs You")
+                needs_you += 1
             else:
                 log("   ⚠️  not confirmed as submitted — left as To Apply")
         browser.close()
 
-    log(f"Done: {done} applied.")
+    log(f"Done: {done} applied, {needs_you} need you.")
+    if unattended:
+        from phone_actions import send_summary
+        send_summary(f"Applied to {done} job(s) today. {needs_you} need you — check the notifications above.")
     if done:
         try:
             from notify_replies import push_csv_to_github

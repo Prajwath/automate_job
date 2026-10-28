@@ -1,0 +1,39 @@
+# Job boards checked by discover_jobs.py. One per line: <platform> <board-token>  # Company name
+# platform is greenhouse, lever or ashby. The token is the part of the job-board URL after the domain,
+# e.g. job-boards.greenhouse.io/okta -> "greenhouse okta", jobs.lever.co/neuron7 -> "lever neuron7".
+# Boards that don't exist are skipped with a warning, so it's safe to add guesses.
+greenhouse okta            # Okta
+greenhouse earnin          # EarnIn
+greenhouse konovo          # Konovo
+greenhouse connectwise     # ConnectWise
+greenhouse cloudflare      # Cloudflare
+greenhouse scopely         # Scopely
+greenhouse poppulo         # Poppulo
+greenhouse sigmoid         # Sigmoid
+greenhouse hackerrank      # HackerRank
+greenhouse smartsheet      # Smartsheet
+greenhouse zscaler         # Zscaler
+greenhouse commvault       # Commvault
+greenhouse simpplr         # Simpplr
+greenhouse gleanwork       # Glean
+greenhouse arcanaanalytics # Arcana Analytics
+lever neuron7              # Neuron7
+lever zimperium            # Zimperium
+lever levelai              # Level AI
+lever brillio-2            # Brillio
+lever bazaarvoice          # Bazaarvoice
+lever merklescience        # Merkle Science
+lever hevodata             # Hevo Data
+lever gushwork             # Gushwork
+ashby openai               # OpenAI
+ashby spoton               # SpotOn
+ashby surveymonkey         # SurveyMonkey
+ashby reo-dev              # Reo.Dev
+ashby ema                  # Ema
+ashby tilthq               # Tilt Finance
+ashby aiprise              # AiPrise
+ashby broccoli             # Broccoli AI
+ashby granica              # Granica
+ashby almabase             # Almabase
+ashby handshake            # Handshake
+ashby anyscale             # Anyscale
