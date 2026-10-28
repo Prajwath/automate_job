@@ -120,7 +120,47 @@ Each day `daily_run.sh`:
 
 Anything that needs you — a captcha, a question the AI couldn't answer, Workday or other sites — is marked **Needs You** and sent to your phone (ntfy) with **Open form**, **Mark applied** and **Skip** buttons. Finish the form in your phone's browser, then tap **Mark applied**. Taps are picked up by the reply monitor within 15 minutes, or by the next daily run. Add or remove companies in `companies.txt`. Remove the schedule with `bash setup_daily.sh --remove`.
 
-### 8. Enable Background Service (Systemd)
+### 8. LinkedIn Easy Apply
+
+`add_50_hybrid_bangalore.py` only adds tracker rows. `linkedin_apply.py` searches LinkedIn and handles Easy Apply applications using `applicant.txt`. It defaults to hybrid Bengaluru roles posted in the last seven days and skips senior titles, internships, and titles explicitly requiring more than two years. Listings requiring an external application are skipped. LinkedIn prohibits third-party website automation and may restrict your account: see [LinkedIn's automated activity policy](https://www.linkedin.com/help/linkedin/answer/a1340567/automated-activity-on-linkedin?lang=en).
+
+```bash
+python3 -m pip install playwright
+python3 -m playwright install chromium
+python3 linkedin_apply.py --check             # local profile/resume configuration check
+python3 linkedin_apply.py --login             # sign in once in the visible browser
+python3 linkedin_apply.py --dry-run --max 5   # list matching roles; no forms or tracker edits
+python3 linkedin_apply.py --headed --max 1    # submit one application with the browser visible
+python3 linkedin_apply.py --max 10            # unattended, up to 10 confirmed submissions
+```
+
+The login browser waits up to ten minutes; complete login and any security verification there. Session expiration requires another `--login`. Keep the session directory private. Existing `~/.config/job-tracker-linkedin` sessions are reused; otherwise the profile is saved in git-ignored `.linkedin-profile/`. Set `LINKEDIN_PROFILE_DIR` in `.env` to choose another directory; do not commit it. `--check` verifies local inputs, not whether LinkedIn still accepts the session.
+
+The runner uploads your resume and fills standard questions only from saved applicant details. It does not use AI or send your resume to an AI provider. For custom questions, copy `linkedin_answers.example.json` to `linkedin_answers.json`, replace each empty string with your truthful answer, and use the exact visible question text as the key. Empty values are ignored. Dropdown/radio answers must match an option exactly. An entry in `Never auto-fill` in `applicant.txt` takes precedence over these answers.
+
+The LinkedIn runner uploads the base PDF configured by `Resume path`; it does not generate a tailored PDF for each role. `tailor_resume.py` is a separate draft-generation utility and is not connected to the LinkedIn submission flow. The first ten LinkedIn applications used the base PDF.
+
+Salary units and skill-specific experience need explicit answers. A saved salary range or a notice period with multiple alternatives cannot fill a numeric field; add an exact question/answer entry when you have chosen a single value. The bot leaves unknown required questions and unsupported custom controls for you. It can accept standard application privacy acknowledgements; optional marketing and talent-pool consent are not accepted automatically.
+
+Only a visible LinkedIn submission confirmation produces **Applied**. Before clicking Submit, the bot records **Submission uncertain**, so a crash cannot silently cause a retry. If confirmation is missing, check LinkedIn's applied jobs before retrying. Blocked forms become **Needs You**, with an ntfy hand-off when configured. These statuses are not retried automatically. After resolving a blocked form, mark it Applied yourself, or set it back to **To Apply** to retry. CAPTCHA, login challenges and application limits stop the run. The bot leaves blocked drafts intact; it never bypasses verification.
+
+The daily runner includes this step once a session directory exists. Set `LINKEDIN_ENABLED="false"` in `.env` to disable it. Install the schedule with `bash setup_daily.sh`; the computer must be awake and online to run at the scheduled time. No unattended workflow can guarantee completion of every employer's form.
+
+Search customization:
+
+```bash
+python3 linkedin_apply.py --keywords "Python Developer" --keywords "LLM Engineer" --workplace hybrid --location "Bengaluru, Karnataka, India" --posted-days 3 --max 5
+```
+
+The runner supports both classic job links and the redesigned result cards. It verifies the listing's actual city and workplace before applying, since LinkedIn can drop search filters during redirects. Bengaluru uses location ID `105214831`; for another city, also pass `--geo-id` with the `geoId` from a LinkedIn search URL.
+
+Local verification (no LinkedIn requests or real submissions):
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+### 9. Enable Background Service (Systemd)
 To run the reply monitor 24/7 in the background across reboots:
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -155,3 +195,9 @@ systemctl --user enable --now job-reply-monitor.service
 |---|---|---|---|
 | Hybrid Bangalore (real postings) | 1–50 | 50 | To Apply — found via web search, Oct 2026 |
 | **Total** | | **50** | **Target CTC: ₹12–15 LPA** |
+
+### Live application dashboard
+
+The dashboard polls the tracker every five seconds, keeps unconfirmed applications out of the Applied count, and displays a connection warning if updates fail. Hosted copies read the canonical tracker on GitHub; local copies read the local CSV.
+
+`python3 publish_dashboard.py --watch` publishes tracker changes and synchronizes the deployment snapshot. The watcher stages only the two tracker CSV files, preserving unrelated code edits. It needs a working GitHub push login and an awake, online computer. The local dashboard runs as `job-dashboard-live.service`; a failed GitHub login leaves the local dashboard live but prevents public updates.

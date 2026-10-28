@@ -302,12 +302,14 @@ def fill_answers(page, fields, answers, log=print):
             elif kind == "combobox":
                 el.click()
                 el.press_sequentially(ans[:40], delay=20)
-                page.wait_for_timeout(500)
-                opts = page.locator("[role=option], [class*=select__option]")
+                page.wait_for_timeout(700)
+                opts = page.locator("[role=option], [class*=select__option], [class*=item]")
                 texts = opts.all_inner_texts()
                 opt = _match(texts, ans)
                 if opt is not None:
                     opts.nth(texts.index(opt)).click()
+                elif opts.count() > 0:
+                    opts.first.click()
                 else:
                     page.keyboard.press("Enter")
         except Exception as e:

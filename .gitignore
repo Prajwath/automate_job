@@ -46,3 +46,12 @@ applicant.txt
 auto_apply.log
 daily_run.log
 .phone_actions_state.json
+
+# LinkedIn session cookies and personal screening answers
+.linkedin-profile/
+.linkedin.lock
+linkedin_answers.json
+.linkedin-tracker-*.tmp
+.dashboard-publish.lock
+.linkedin-questions/
+vercel_site/.tracker-*.tmp

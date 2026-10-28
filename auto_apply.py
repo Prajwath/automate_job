@@ -137,7 +137,9 @@ def answer_for(label, app, row):
         (r"portfolio|website|personal site", "portfolio"),
         (r"current (company|employer)|^company$|^org", "current company"),
         (r"current (title|role|designation)|job title", "current title"),
-        (r"(current|present) (location|city)|where are you (based|located)|^location|city", "current location"),
+        (r"(current|present) (location|city)|where are you (based|located)|^location", "current location"),
+        (r"\bcountry\b", "country"),
+        (r"\bcity\b", "city"),
         (r"relocat", "willing to relocate"),
         (r"hybrid|in[- ]office|days .*office|office .*days", "hybrid ok"),
         (r"notice period|earliest .*(start|join)|when can you (start|join)|availability to start", "notice period"),
@@ -206,7 +208,24 @@ def fill_form(page, app, row):
                 log(f"   resume upload failed: {e}")
             break
 
-    # Searchable dropdowns (role=combobox) are left to the Claude agent: typing into them doesn't select anything.
+    # Lever & Greenhouse location inputs
+    loc = page.locator("#location-input, [data-qa='location-input'], input[name='location']")
+    if loc.count() and loc.first.is_visible() and not loc.first.input_value():
+        try:
+            loc.first.click()
+            loc.first.type("Bengaluru", delay=60)
+            page.wait_for_timeout(1500)
+            opts = page.locator(".dropdown-results > *")
+            if opts.count():
+                opts.first.click()
+                page.wait_for_timeout(500)
+            else:
+                loc.first.fill("Bengaluru, Karnataka, India")
+                page.evaluate("() => { const s = document.querySelector('#selected-location'); if (s) s.value = 'Bengaluru, Karnataka, India'; }")
+        except Exception:
+            pass
+
+    # Searchable dropdowns (role=combobox) are left to the AI agent: typing into them doesn't select anything.
     for el in page.query_selector_all("input:not([type=hidden]):not([type=file]):not([type=submit]):not([type=checkbox]):not([type=radio]):not([role=combobox]), textarea, select"):
         try:
             if not el.is_visible() or not el.is_enabled():
@@ -251,6 +270,30 @@ def required_missing(page):
     )
 
 
+def try_solve_turnstile(page):
+    """Automatically click Cloudflare Turnstile checkbox if present."""
+    try:
+        for f in page.frames:
+            if any(k in f.url for k in ("turnstile", "challenges.cloudflare.com")):
+                cb = f.locator("input[type=checkbox], #challenge-stage, .ctp-checkbox-label, div[id*='turnstile']")
+                if cb.count() and cb.first.is_visible():
+                    cb.first.click()
+                    time.sleep(2)
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def has_active_captcha_puzzle(page):
+    """Returns True ONLY if an interactive image/puzzle challenge is actively visible."""
+    puzzles = page.locator("iframe[src*='recaptcha/api2/bframe'], iframe[title*='recaptcha challenge'], iframe[src*='hcaptcha.com/box']")
+    try:
+        return puzzles.count() > 0 and puzzles.first.is_visible()
+    except Exception:
+        return False
+
+
 def has_captcha(page):
     return page.locator("iframe[src*=recaptcha], iframe[src*=hcaptcha], iframe[src*=turnstile], .g-recaptcha, .h-captcha").count() > 0
 
@@ -264,7 +307,18 @@ def submitted(page, start_url):
 
 
 def click_submit(page):
-    for sel in ["button[type=submit]", "input[type=submit]", "button:has-text('Submit application')", "button:has-text('Submit')"]:
+    selectors = [
+        "#btn-submit",
+        "[data-qa='btn-submit']",
+        ".template-btn-submit",
+        "button[type=submit]",
+        "input[type=submit]",
+        "button:has-text('Submit application')",
+        "button:has-text('Submit Application')",
+        "button:has-text('Submit')",
+        "button:has-text('Apply')",
+    ]
+    for sel in selectors:
         btn = page.locator(sel)
         if btn.count() and btn.first.is_visible():
             btn.first.click()
@@ -298,7 +352,8 @@ def pick_rows(args):
         only = set(args[args.index("--only") + 1].split(","))
     out, skipped, hand_off = [], [], []
     for r in rows:
-        if r["Status"].strip().lower() != "to apply":
+        valid_statuses = {"to apply", "needs you"} if "--retry-needs-you" in args else {"to apply"}
+        if r["Status"].strip().lower() not in valid_statuses:
             continue
         if only and r["Application_ID"] not in only:
             continue
@@ -371,10 +426,31 @@ def main():
             log(f"🤖 AI form agent on ({agent.name}): every question will be answered from your resume")
         except Exception as e:
             log(f"⚠️  AI form agent off ({e}). Set GEMINI_API_KEY or ANTHROPIC_API_KEY in .env to enable it.")
+    max_apps = None
+    for i, a in enumerate(args):
+        if a == "--max" and i + 1 < len(args):
+            try:
+                max_apps = int(args[i + 1])
+            except ValueError:
+                pass
+
     done = 0
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=unattended)
-        page = browser.new_page()
+        browser = p.chromium.launch(
+            headless=("--headless" in args) or (unattended and "--headed" not in args),
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-infobars",
+            ]
+        )
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 800},
+        )
+        context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        page = context.new_page()
+
         for i, (row, platform) in enumerate(todo, 1):
             url = apply_url(row["Job_URL"], platform)
             log(f"[{i}/{len(todo)}] #{row['Application_ID']} {row['Company']} — {row['Job_Title']}")
@@ -399,31 +475,36 @@ def main():
                         missing = required_missing(page)
                 except Exception as e:
                     log(f"   🤖 agent failed on this form: {e}")
-            captcha = has_captcha(page)
+
+            # Try to auto-click Cloudflare Turnstile if present
+            try_solve_turnstile(page)
+
             if missing:
                 log(f"   left for you: {', '.join(missing)[:300]}")
 
-            if auto and not missing and not captcha:
+            ok = False
+            if auto:
                 start = page.url
                 since = datetime.now()
-                click_submit(page)
-                time.sleep(5)
-                ok = submitted(page, start)
-                if not ok and handle_otp(page, app["email"], gmail_password, since, row["Company"], log):
-                    click_submit(page)
-                    time.sleep(5)
+                clicked = click_submit(page)
+                if clicked:
+                    time.sleep(6)
                     ok = submitted(page, start)
-            elif unattended:
-                reason = "captcha" if captcha else "unanswered: " + ", ".join(missing)[:120]
-                log(f"   needs you ({reason}) — sent to your phone")
-                from phone_actions import send_needs_you
-                send_needs_you(row, reason)
-                set_status(row["Application_ID"], "Needs You")
-                needs_you += 1
-                continue
+                    if not ok and handle_otp(page, app["email"], gmail_password, since, row["Company"], log):
+                        click_submit(page)
+                        time.sleep(6)
+                        ok = submitted(page, start)
+
+                if not ok and unattended:
+                    has_puzzle = has_active_captcha_puzzle(page)
+                    reason = "captcha challenge required" if has_puzzle else ("unanswered: " + ", ".join(missing)[:120] if missing else "submission not confirmed")
+                    log(f"   needs you ({reason}) — sent to your phone")
+                    from phone_actions import send_needs_you
+                    send_needs_you(row, reason)
+                    set_status(row["Application_ID"], "Needs You")
+                    needs_you += 1
+                    continue
             else:
-                if auto:
-                    log("   needs you: " + ("captcha" if captcha else "required questions"))
                 answer = input("   Check the form and click Submit in the browser, then press Enter (s = skip, q = quit): ").strip().lower()
                 if answer == "q":
                     break
@@ -435,7 +516,10 @@ def main():
             if ok:
                 mark_applied(row["Application_ID"], app["email"])
                 done += 1
-                log("   ✅ marked Applied")
+                log(f"   ✅ marked Applied ({done}" + (f"/{max_apps})" if max_apps else ")"))
+                if max_apps and done >= max_apps:
+                    log(f"   🎯 Reached target of {max_apps} applied jobs! Stopping.")
+                    break
             elif unattended:
                 log("   ⚠️  not confirmed as submitted — sent to your phone to check")
                 from phone_actions import send_needs_you

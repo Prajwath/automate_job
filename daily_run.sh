@@ -11,4 +11,5 @@ git pull --rebase --autostash -q || echo "git pull failed, continuing with local
 $PY phone_actions.py
 $PY discover_jobs.py
 $PY auto_apply.py --unattended --junior-only
+$PY linkedin_apply.py --scheduled --max 10 || echo "LinkedIn stopped; check auto_apply.log for details"
 $PY -c "from notify_replies import push_csv_to_github; push_csv_to_github()"
