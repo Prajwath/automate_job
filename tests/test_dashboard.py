@@ -69,7 +69,7 @@ class DashboardTests(unittest.TestCase):
     def test_hosted_dashboard_fetches_canonical_published_tracker(self):
         self.page.goto('https://dashboard.example.test/')
         self.page.wait_for_function("document.querySelector('#sub').textContent.startsWith('Live')")
-        self.assertTrue(self.sources[0].startswith('https://raw.githubusercontent.com/Prajwath/automate_job/main/job_applications.csv?'))
+        self.assertTrue(self.sources[0].startswith('https://raw.githubusercontent.com/prajwath/automate_job/main/job_applications.csv?'))
 
 
 if __name__=='__main__':
