@@ -303,6 +303,7 @@ tbody td{padding:0;border:0;min-width:0}
 .metric-caption svg{color:var(--muted)}
 }
 
+.sr-only:focus-visible{position:fixed;clip:auto;width:auto;height:auto;left:16px;top:16px;padding:8px;background:var(--surface);z-index:100}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
 *{animation:none!important;transition:none!important}
 }
@@ -490,6 +491,8 @@ function checkNewPositives(){
 }
 
 ['q','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
+function syncNavigation(){const target=location.hash||'#overview';document.querySelectorAll('.nav-item').forEach(link=>{const active=link.getAttribute('href')===target;link.classList.toggle('active',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});}
+window.addEventListener('hashchange',syncNavigation);syncNavigation();
 load(); setInterval(load,5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden) load();});
 </script></body></html>
