@@ -71,6 +71,43 @@ class DashboardTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelector('#sub').textContent.includes('Connection lost')")
         self.assertEqual(self.page.locator('#total').inner_text(),'2')
 
+    def test_reply_tabs_filter_real_statuses_and_clear_search(self):
+        self.statuses = ['Applied', 'Interview', 'Rejected']
+        self.page.goto('http://localhost:5050/dashboard.html')
+        self.page.wait_for_function("document.querySelector('#total').textContent==='3'")
+        self.page.locator('[data-reply="none"]').click()
+        self.assertEqual(self.page.locator('#body tr').count(), 1)
+        self.page.locator('[data-reply="responded"]').click()
+        self.assertEqual(self.page.locator('#body tr').count(), 2)
+        self.page.locator('#q').fill('Company 3')
+        self.assertEqual(self.page.locator('#body tr').count(), 1)
+        self.page.get_by_role('button', name='Clear filters', exact=True).click()
+        self.assertEqual(self.page.locator('#body tr').count(), 3)
+
+    def test_detail_panel_marks_reply_and_returns_keyboard_focus(self):
+        self.page.goto('http://localhost:5050/dashboard.html')
+        self.page.wait_for_function("document.querySelector('#total').textContent==='1'")
+        self.page.get_by_role('button', name='View application at Company 1', exact=True).click()
+        self.assertTrue(self.page.get_by_role('dialog').is_visible())
+        self.assertEqual(self.page.locator('#detail-title').inner_text(), 'Python Developer')
+        self.assertEqual(self.page.locator('[aria-label="Completed: Yes"]').count(), 1)
+        self.page.get_by_role('button', name='Positive reply', exact=True).click()
+        self.assertEqual(self.page.locator('#replied').inner_text(), '1 reply')
+        self.assertIn('Marked on this device', self.page.locator('#body').inner_text())
+        self.page.keyboard.press('Escape')
+        self.assertFalse(self.page.get_by_role('dialog').is_visible())
+        self.page.wait_for_function("document.activeElement.dataset.applicationId === '1'")
+
+    def test_phone_layout_and_detail_panel_fit_the_viewport(self):
+        self.page.set_viewport_size({'width': 375, 'height': 812})
+        self.page.goto('http://localhost:5050/dashboard.html')
+        self.page.wait_for_function("document.querySelector('#total').textContent==='1'")
+        self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth > innerWidth'))
+        self.page.locator('[data-application-id]').click()
+        self.page.wait_for_timeout(220)
+        self.assertTrue(self.page.get_by_role('dialog').is_visible())
+        self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth > innerWidth'))
+
     def test_hosted_dashboard_fetches_canonical_published_tracker(self):
         self.page.goto('https://dashboard.example.test/')
         self.page.wait_for_function("document.querySelector('#sub').textContent.startsWith('Live')")

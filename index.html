@@ -1,214 +1,329 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
-<title>Job Application Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#f6f7fb;--surface:#fff;--surface2:#f1f3f8;--border:#e3e6ee;--text:#0f172a;--muted:#64748b;--faint:#94a3b8;
-  --accent:#4f46e5;--accent-soft:rgba(79,70,229,.1);
-  --pos:#059669;--pos-soft:rgba(5,150,105,.12);--neg:#dc2626;--neg-soft:rgba(220,38,38,.1);
-  --neu:#d97706;--neu-soft:rgba(217,119,6,.12);--none:#94a3b8;--none-soft:rgba(148,163,184,.16);
-  --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.05);--r:14px;
-}
-@media (prefers-color-scheme:dark){:root{
-  --bg:#0b1120;--surface:#131b2e;--surface2:#1a2338;--border:#243049;--text:#e8edf6;--muted:#94a3b8;--faint:#64748b;
-  --accent:#818cf8;--accent-soft:rgba(129,140,248,.14);
-  --pos:#34d399;--pos-soft:rgba(52,211,153,.14);--neg:#f87171;--neg-soft:rgba(248,113,113,.14);
-  --neu:#fbbf24;--neu-soft:rgba(251,191,36,.14);--none:#64748b;--none-soft:rgba(100,116,139,.18);
-  --shadow:0 1px 2px rgba(0,0,0,.3);
-}}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font:14px/1.5 'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 60px}
-button{font:inherit;color:inherit;cursor:pointer}
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f6f8fa"><meta name="description" content="A live view of completed job applications, employer replies, and role details."><title>Career tracker · Applications</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
+
+:root{color-scheme:light;--bg:#f6f8fa;--surface:#fff;--surface2:#f3f6f7;--border:#e6ebed;--text:#172d35;--muted:#5f737c;--faint:#63757e;--accent:#147d68;--accent-soft:#eaf5f0;--pos:#16795c;--pos-soft:#eaf6ef;--neg:#bd4b53;--neg-soft:#fdf0f0;--neu:#a36d20;--neu-soft:#fff6e7;--none:#8a99a2;--none-soft:#f0f3f5;--r:16px;--shadow:0 2px 8px #17303a03}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{background:var(--bg);color:var(--text);font:14px/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,summary{font:inherit}
+button,a,summary{-webkit-tap-highlight-color:transparent}
+button,summary{cursor:pointer}
+button{color:inherit}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
+button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #147d6855;outline-offset:3px}
+button:disabled{cursor:default}
+svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+[hidden]{display:none!important}
 
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px}
-h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
-.sub{color:var(--muted);font-size:13px;margin-top:2px;display:flex;align-items:center;gap:6px}
-.live{width:7px;height:7px;border-radius:50%;background:var(--pos);box-shadow:0 0 0 3px var(--pos-soft)}
-.actions{display:flex;gap:8px;flex-shrink:0}
-.ibtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;box-shadow:var(--shadow)}
-.ibtn:hover{border-color:var(--faint)}
-.ibtn.on{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
-.ibtn svg{width:16px;height:16px}
+.sidebar{width:220px;position:fixed;inset:0 auto 0 0;background:var(--surface);border-right:1px solid var(--border);padding:32px 22px;display:flex;flex-direction:column;z-index:20}
+.brand{display:flex;gap:11px;align-items:center;font-size:17px;letter-spacing:-.7px;font-weight:700;color:var(--text);white-space:nowrap}
+.brand:hover{text-decoration:none}
+.brand-icon{height:34px;width:34px;border-radius:10px;background:var(--accent);color:white;display:grid;place-items:center}
+.brand-icon svg{width:20px}
+.nav-label,.eyebrow{font-size:10px;font-weight:600;letter-spacing:1.7px;color:var(--faint);text-transform:uppercase}
+.nav-label{margin:48px 12px 14px}
+.sidebar nav{display:grid;gap:6px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;font-size:13px;color:var(--muted);font-weight:500}
+.nav-item:hover{text-decoration:none;background:var(--surface2)}
+.nav-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav-item .nav-count{margin-left:auto;background:#fff8;padding:1px 7px;border-radius:5px;font-size:11px}
+.sidebar-bottom{margin-top:auto;padding-top:32px}
+.sidebar-note{padding:15px;background:var(--bg);border:1px solid var(--border);border-radius:11px;font-size:11px;color:var(--muted)}
+.sidebar-note b{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text);margin-bottom:5px}
+.sidebar-note svg{width:15px;color:var(--accent)}
+.profile{display:flex;align-items:center;gap:10px;padding:22px 3px 0}
+.avatar{width:34px;height:34px;border-radius:50%;background:#e8edef;display:grid;place-items:center;font-size:11px;font-weight:600;color:#506972}
+.profile strong{font-size:12px;font-weight:600;display:block}
+.profile small{display:block;font-size:10px;color:var(--muted)}
 
-.grid{display:grid;grid-template-columns:1.1fr 1.9fr;gap:16px;margin-bottom:16px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
-.pad{padding:20px}
-.label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.wrap{margin-left:220px;padding:28px 44px 40px;max-width:1720px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:44px}
+.breadcrumb{font-size:12px;color:var(--faint)}
+.breadcrumb span{margin:0 9px;color:#bac5ca}
+.breadcrumb b{font-weight:500;color:var(--muted)}
+.actions{display:flex;align-items:center;gap:9px}
+.ibtn{display:inline-flex;justify-content:center;align-items:center;gap:7px;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:12px;font-weight:500;white-space:nowrap}
+.ibtn:hover{background:var(--surface2);border-color:#cad7d9}
+.ibtn svg{height:15px;width:15px}
+.ibtn.on{background:var(--accent-soft);color:var(--accent)}
+.heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px}
+.eyebrow{color:var(--accent);margin-bottom:8px}
+h1{font-size:32px;letter-spacing:-1.3px;font-weight:600;line-height:1.25}
+.intro{font-size:13px;color:var(--muted);margin-top:9px}
+.sync{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;white-space:nowrap;padding-bottom:3px}
+.live{display:block;width:6px;height:6px;background:var(--pos);border-radius:50%;box-shadow:0 0 0 4px var(--pos-soft);flex-shrink:0}
+.metrics{display:grid;grid-template-columns:1fr 3fr;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.metric{padding:24px 26px;text-align:left;position:relative;border:0;background:none;min-width:0}
+.metric+.metric{border-left:1px solid var(--border)}
+.metric-caption{font-size:12px;color:var(--muted);font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.metric-caption svg{height:17px;width:17px;color:#9aaab0}
+.metric-number{font-size:34px;line-height:1.3;letter-spacing:-1px;font-weight:600;margin:8px 0 5px;font-variant-numeric:tabular-nums}
+.metric-foot{font-size:10px;color:var(--faint)}
+.metric-foot strong{font-weight:500;color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);border-left:1px solid var(--border)}
+.tiles button:hover{background:#f9fcfb}
+.tiles button.on{background:var(--accent-soft)}
+.metric-positive .metric-number{color:var(--pos)}
 
-.overview{display:flex;flex-direction:column;justify-content:space-between;gap:18px}
-.big{display:flex;align-items:baseline;gap:10px}
-.big .n{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1}
-.big .of{color:var(--muted);font-size:14px}
-.rate{display:flex;gap:24px}
-.rate div b{display:block;font-size:20px;font-weight:700}
-.rate div span{font-size:12px;color:var(--muted)}
-.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--surface2);gap:2px}
-.bar span{height:100%;border-radius:99px;transition:width .4s}
+.wins{border:1px solid var(--border);border-radius:11px;padding:15px 18px;background:#f0f6f4;margin-bottom:30px;display:flex;align-items:center;gap:13px}
+.wins-icon{width:32px;height:32px;border-radius:50%;background:#e3eee8;color:var(--accent);display:grid;place-items:center;flex-shrink:0}
+.wins-copy{flex:1;min-width:0}
+.wins-copy strong{font-size:12px;font-weight:500;display:block}
+.wins-copy p{font-size:11px;color:var(--muted);margin-top:1px}
+.wins-list{display:flex;gap:14px;overflow-x:auto}
+.win{min-width:200px;padding:7px 0}
+.win b,.win span{display:block;font-size:12px}
+.win em{font-size:10px;color:var(--pos);font-style:normal}
+.win span{color:var(--muted);font-size:11px}
+.small{font-size:11px;color:var(--muted)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panels:not(:has(.panel:not([hidden]))){display:none}
+.panel{border:1px solid var(--border);background:var(--surface);padding:22px;border-radius:12px;margin-bottom:24px}
+.panel h2{font-size:14px;margin-bottom:15px}
+.row{display:grid;grid-template-columns:110px 1fr 80px;gap:10px;font-size:11px;margin:8px 0}
+.bar{height:5px;display:flex;background:var(--surface2);border-radius:9px;overflow:hidden}
+.bar span{height:100%}
 
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.tile{text-align:left;border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:14px;transition:border-color .15s,transform .15s;position:relative}
-.tile:hover{transform:translateY(-1px)}
-.tile.on{border-color:var(--c);box-shadow:0 0 0 3px var(--cs)}
-.tile .t{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
-.tile .t i{width:8px;height:8px;border-radius:50%;background:var(--c)}
-.tile .n{font-size:28px;font-weight:700;margin-top:6px;color:var(--c);letter-spacing:-.02em}
-.tile .d{font-size:12px;color:var(--faint)}
-.t-pos{--c:var(--pos);--cs:var(--pos-soft)}.t-neg{--c:var(--neg);--cs:var(--neg-soft)}.t-neu{--c:var(--neu);--cs:var(--neu-soft)}.t-none{--c:var(--none);--cs:var(--none-soft)}
+.list{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:visible;box-shadow:var(--shadow);scroll-margin-top:24px}
+.list-heading{padding:24px 24px 16px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.list-heading h2{font-size:16px;letter-spacing:-.4px;font-weight:600}
+.list-heading p{color:var(--muted);font-size:11px;margin-top:3px}
+.completion-label{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--accent);background:var(--accent-soft);padding:5px 9px;border-radius:6px;white-space:nowrap}
+.completion-label svg{height:12px;width:12px}
+.view-tabs{display:flex;gap:25px;padding:0 24px;border-bottom:1px solid var(--border);overflow:auto;scrollbar-width:none}
+.view-tab{background:none;border:0;border-bottom:2px solid transparent;display:flex;align-items:center;gap:7px;white-space:nowrap;padding:13px 0;font-size:12px;color:var(--muted)}
+.view-tab[aria-pressed=true]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.view-tab small{font-size:10px;background:var(--surface2);border-radius:4px;padding:0 5px;font-variant-numeric:tabular-nums}
+.view-tab[aria-pressed=true] small{background:var(--accent-soft)}
+.toolbar{padding:18px 24px 14px;display:flex;align-items:center;gap:10px}
+.search{position:relative;flex:1;max-width:440px;min-width:0}
+.search svg{position:absolute;width:16px;height:16px;left:12px;top:12px;color:var(--faint)}
+input,select{height:39px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--surface);color:var(--text);min-width:0}
+input{padding:0 12px 0 36px;width:100%}
+input::placeholder{color:var(--faint)}
+select{padding:0 26px 0 10px;max-width:100%;cursor:pointer}
+.toolbar-spacer{flex:1}
+.filter-menu{position:relative}
+.filter-menu summary{list-style:none}
+.filter-menu summary::-webkit-details-marker{display:none}
+.filter-menu[open] summary{border-color:var(--accent);color:var(--accent)}
+.filter-popover{position:absolute;top:47px;right:0;width:250px;padding:18px;background:var(--surface);box-shadow:0 12px 36px #18303a1a;border:1px solid var(--border);border-radius:12px;z-index:10;display:grid;gap:12px}
+.filter-popover label{display:grid;gap:5px;font-size:11px;color:var(--muted)}
+.filter-popover select{width:100%}
+.meta{padding:0 24px 13px;display:flex;justify-content:space-between;font-size:10px;color:var(--faint)}
+.clear{background:none;border:0;color:var(--accent);font-size:11px}
+.clear:hover{text-decoration:underline}
+.table-scroll{width:100%}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th{padding:12px 22px;text-align:left;font-size:10px;font-weight:500;color:var(--muted);background:#fafbfc;border-block:1px solid var(--border)}
+th:nth-child(1){width:41%}
+th:nth-child(2){width:16%}
+th:nth-child(3){width:20%}
+th:nth-child(4){width:18%}
+th:nth-child(5){width:5%;padding:0}
+td{padding:18px 22px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#fafcfb}
+.company-cell{display:flex;gap:13px;align-items:center;min-width:0}
+.company-avatar{height:38px;width:38px;border:1px solid #dce8e5;border-radius:10px;display:grid;place-items:center;flex-shrink:0;font-size:11px;font-weight:600;color:#58766e;background:#f0f5f3}
+.company-info{min-width:0}
+.company-name{font-size:11px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:2px}
+.role{font-size:12px;font-weight:500;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text)}
+.role:hover{color:var(--accent)}
+.location{font-size:10px;color:var(--faint);margin-top:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.date{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.date-sub{font-size:9px;color:var(--faint);margin-top:3px}
+.pay{font-size:11px;color:var(--muted);overflow-wrap:anywhere;line-height:1.5}
+.pay.undisclosed{color:var(--faint)}
+.pill{font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:4px 8px;white-space:nowrap}
+.pill i{height:5px;width:5px;background:currentColor;border-radius:50%}
+.p-pos{background:var(--pos-soft);color:var(--pos)}
+.p-neg{background:var(--neg-soft);color:var(--neg)}
+.p-neu{background:var(--neu-soft);color:var(--neu)}
+.p-none{background:var(--none-soft);color:#5e727d}
+.edited{font-size:9px;color:var(--faint);display:block;margin-top:3px}
+.detail-cell{padding:12px 12px 12px 0}
+.detail-btn{height:32px;width:30px;display:grid;place-items:center;background:transparent;border:0;border-radius:7px;color:var(--faint)}
+.detail-btn:hover{background:var(--accent-soft);color:var(--accent)}
+.detail-btn svg{width:15px}
+.empty{padding:60px 20px;text-align:center;display:none}
+.empty svg{width:28px;height:28px;color:var(--faint);margin-bottom:9px}
+.empty h3{font-size:14px;font-weight:500}
+.empty p{font-size:12px;color:var(--muted);margin:6px 0 15px}
+.foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:15px;color:var(--faint);font-size:10px}
+.page-footer{display:flex;justify-content:space-between;padding:23px 2px 0;font-size:10px;color:var(--faint)}
 
-.todo-btn{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0}
-.todo-btn.on{background:var(--accent);color:#fff}
-.p-todo{background:var(--accent-soft);color:var(--accent)}
-.p-needs{background:var(--neu-soft);color:var(--neu)}
-.wins{margin-bottom:16px}
-.wins-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.wins-list{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
-.win{flex:0 0 auto;min-width:200px;max-width:260px;border-radius:12px;padding:12px 14px;background:var(--pos-soft);border:1px solid transparent}
-.win b{display:block;font-size:14px}
-.win span{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.win em{font-style:normal;font-size:12px;font-weight:600;color:var(--pos)}
-.wins-empty{color:var(--muted);font-size:13px}
-
-.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.panel[hidden],.panels:not(:has(.panel:not([hidden]))){display:none}
-.panel h2{font-size:14px;margin-bottom:12px}
-.row{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px}
-.row span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-.list{overflow:hidden}
-.toolbar{position:sticky;top:0;z-index:5;background:var(--surface);padding:14px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;border-radius:var(--r) var(--r) 0 0}
-.search{position:relative}
-.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--faint)}
-input,select{font:inherit;font-size:13px;color:var(--text);background:var(--surface2);border:1px solid transparent;border-radius:10px;height:38px;outline:none}
-input{width:100%;padding:0 12px 0 36px}
-select{padding:0 28px 0 10px;flex:0 0 auto;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-input:focus,select:focus{border-color:var(--accent);background-color:var(--surface)}
-.filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-.filters::-webkit-scrollbar{display:none}
-.meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
-.clear{background:none;border:0;color:var(--accent);font-size:12px;font-weight:500}
-
-table{width:100%;border-collapse:collapse}
-th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);text-align:left;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
-td{padding:14px 16px;border-bottom:1px solid var(--border);vertical-align:top}
-tbody tr:last-child td{border-bottom:0}
-tbody tr:hover td{background:var(--surface2)}
-.co{font-weight:600}
-.role{font-size:13px;margin-top:2px;display:block}
-.small{font-size:12px;color:var(--muted)}
-.notes{font-size:12px;color:var(--muted);max-width:320px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
-.pill i{width:6px;height:6px;border-radius:50%;background:currentColor}
-.p-pos{background:var(--pos-soft);color:var(--pos)}.p-neg{background:var(--neg-soft);color:var(--neg)}.p-neu{background:var(--neu-soft);color:var(--neu)}.p-none{background:var(--none-soft);color:var(--muted)}
-.edited{font-size:11px;color:var(--faint);margin-left:4px}
-.mark{display:flex;gap:4px;opacity:.55;transition:opacity .15s}
-tr:hover .mark,.mark:focus-within{opacity:1}
-.mark button{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:13px;display:grid;place-items:center}
-.mark button:hover{border-color:var(--faint)}
-.empty{text-align:center;padding:48px 16px;color:var(--muted);display:none}
-.foot{color:var(--faint);font-size:12px;padding:14px 16px;border-top:1px solid var(--border)}
-
-@media(max-width:900px){.grid{grid-template-columns:1fr}.panels{grid-template-columns:1fr}}
-@media(max-width:700px){
-  .wrap{padding:18px 14px 40px}
-  header{margin-bottom:18px}
-  h1{font-size:19px}
-  .ibtn .lbl{display:none}
-  .ibtn{padding:0 10px}
-  .tiles{grid-template-columns:repeat(2,1fr)}
-  .big .n{font-size:38px}
-  thead{display:none}
-  table,tbody,tr,td{display:block}
-  tr{padding:14px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr auto;gap:2px 12px}
-  tbody tr:hover td{background:none}
-  td{padding:0;border:0}
-  td.c-main{grid-column:1}
-  td.c-reply{grid-column:2;grid-row:1;text-align:right}
-  td.c-meta,td.c-notes,td.c-mark,td.c-completed{grid-column:1/-1}
-  td.c-meta,td.c-completed{margin-top:4px}
-  td.c-notes .notes{max-width:none;margin-top:4px}
-  td.c-mark .mark{opacity:1;margin-top:8px}
-  td.d-only{display:none}
-  .row{grid-template-columns:96px 1fr 60px}
+.detail-dialog{position:fixed;inset:0 0 0 auto;margin:0 0 0 auto;border:0;border-left:1px solid var(--border);width:480px;max-width:100%;height:100dvh;max-height:none;background:var(--surface);color:var(--text);box-shadow:-12px 0 50px #17303a12}
+.detail-dialog::backdrop{background:#172d3535;backdrop-filter:blur(2px)}
+.detail-dialog[open]{display:flex;flex-direction:column;animation:slide-in .18s ease-out}
+.detail-top{display:flex;justify-content:space-between;align-items:center;padding:21px 25px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.close-btn{height:36px;width:36px;border:0;background:var(--surface2);border-radius:8px;display:grid;place-items:center}
+.detail-content{overflow-y:auto;padding:28px 26px;overscroll-behavior:contain}
+.detail-content .company-avatar{height:48px;width:48px;margin-bottom:17px;font-size:13px}
+.detail-company{font-size:12px;color:var(--muted);margin-bottom:4px}
+.detail-content h2{font-size:23px;line-height:1.35;font-weight:600;letter-spacing:-.7px;margin-bottom:15px}
+.detail-location{font-size:12px;color:var(--muted);margin-top:10px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:19px 12px;border-block:1px solid var(--border);padding:22px 0;margin:25px 0}
+.detail-grid dt{font-size:10px;color:var(--faint);margin-bottom:5px}
+.detail-grid dd{font-size:12px;overflow-wrap:anywhere}
+.detail-section{margin-bottom:24px}
+.detail-section h3{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:1px;margin-bottom:9px}
+.detail-section p{font-size:12px;line-height:1.8;color:var(--muted);white-space:pre-line;overflow-wrap:anywhere}
+.detail-actions{display:flex;flex-direction:column;gap:10px;padding:20px 0}
+.primary-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:9px;padding:11px 17px;font-size:12px;font-weight:500}
+.primary-btn:hover{background:#106b59;text-decoration:none}
+.mark{display:flex;flex-wrap:wrap;gap:7px}
+.mark button{border:1px solid var(--border);border-radius:7px;background:var(--surface);padding:7px 10px;font-size:11px}
+.mark button:hover{border-color:var(--accent);color:var(--accent)}
+.device-note{font-size:10px!important;color:var(--faint)!important;margin-top:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@keyframes slide-in{from{transform:translateX(24px);opacity:.6}
+to{transform:translateX(0);opacity:1}
 }
-@media(min-width:701px){td.m-only{display:none}}
-</style>
-</head>
-<body>
-<div class="wrap">
-<header>
-  <div>
-    <h1>Job Application Tracker</h1>
-    <div class="sub"><i class="live"></i><span id="sub">Loading…</span></div>
-  </div>
-  <div class="actions">
-    <button class="ibtn" id="alertbtn" onclick="enableAlerts()" title="Notify me about new positive replies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="lbl">Alerts</span></button>
-    <button class="ibtn" onclick="exportCSV()" title="Export filtered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span class="lbl">Export</span></button>
-    <button class="ibtn" onclick="load()" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lbl">Refresh</span></button>
-  </div>
-</header>
 
-<section class="grid">
-  <div class="card pad overview">
-    <div>
-      <div class="label" style="display:flex;justify-content:space-between;align-items:center">Applied<span id="todo"></span></div>
-      <div class="big"><span class="n" id="total">0</span><span class="of" id="replied"></span></div>
-    </div>
-    <div class="bar" id="sentbar"></div>
-    <div class="rate">
-      <div><b id="rrate">0%</b><span>reply rate</span></div>
-      <div><b id="prate">0%</b><span>of replies positive</span></div>
-    </div>
-  </div>
-  <div class="tiles" id="tiles"></div>
-</section>
+@media(min-width:1600px){.wrap{padding-inline:60px}
+}
+@media(max-width:1150px){.sidebar{width:185px;padding-inline:15px}
+.brand{font-size:15px;gap:8px}
+.wrap{margin-left:185px;padding-inline:26px}
+.metric{padding:20px 18px}
+.metric-caption{font-size:11px}
+.sync{font-size:9px}
+.heading{align-items:flex-start;flex-direction:column;gap:14px}
+th,td{padding-inline:16px}
+.company-cell{gap:9px}
+.company-avatar{width:32px;height:32px}
+}
 
-<section class="card pad wins">
-  <div class="wins-head"><div class="label">🎉 Positive replies</div><span class="small" id="wins-count"></span></div>
-  <div class="wins-list" id="wins"></div>
-</section>
+@media(max-width:850px){.sidebar{width:72px;padding:27px 16px}
+.brand>span:last-child,.nav-label,.nav-item>span,.sidebar-bottom{display:none}
+.sidebar nav{margin-top:42px}
+.nav-item{justify-content:center;padding:11px}
+.brand-icon{width:38px;height:38px}
+.wrap{margin-left:72px;padding:26px 22px}
+.topbar{margin-bottom:32px}
+.metric{padding:19px 15px}
+.metric-caption svg{display:none}
+th:nth-child(1){width:43%}
+th:nth-child(2){width:18%}
+th:nth-child(3){width:17%}
+th:nth-child(4){width:18%}
+th:nth-child(5){width:4%}
+.pill{font-size:9px;padding:4px 6px}
+.toolbar,.list-heading{padding-inline:18px}
+.view-tabs{padding-inline:18px;gap:20px}
+.metric-number{font-size:29px}
+}
 
-<section class="panels">
-  <div class="card pad panel analysis" hidden><h2>By fit</h2><div id="cohorts"></div></div>
-  <div class="card pad panel analysis" hidden><h2>By channel</h2><div id="channels"></div></div>
-</section>
+@media(max-width:620px){.sidebar{display:none}
+.wrap{margin:0;padding:22px 16px 28px}
+.topbar{margin-bottom:27px}
+.breadcrumb{font-size:11px}
+.breadcrumb span{margin:0 5px}
+.actions{gap:6px}
+.ibtn{height:34px;padding:0 9px}
+.actions .lbl{display:none}
+.actions button svg{height:15px;width:15px}
+h1{font-size:27px;letter-spacing:-1px}
+.heading{gap:16px;margin-bottom:22px}
+.intro{font-size:12px;max-width:290px}
+.sync{font-size:9px}
+.metrics{grid-template-columns:1fr 1fr;margin-bottom:16px;border-radius:13px}
+.tiles{display:contents;border:0}
+.metric{padding:18px}
+.metric+.metric{border-left:0}
+.metric-number{font-size:31px;margin:6px 0}
+.metric-caption{font-size:11px}
+.metric-caption svg{display:block;width:15px;height:15px}
+.metric-foot{font-size:9px}
+.metrics>.metric{border-right:1px solid var(--border)}
+.tiles .metric:nth-child(2){border-right:1px solid var(--border)}
+.tiles .metric:nth-child(n+2){border-top:1px solid var(--border)}
+.wins:has(.wins-list:empty){display:none}
+.wins{margin-bottom:22px;padding:13px;border-radius:10px}
+.wins-copy strong{font-size:11px}
+.wins-copy p{font-size:10px}
+.wins-icon{width:28px;height:28px}
+.list{border-radius:13px}
+.list-heading{padding:19px 16px 13px}
+.list-heading h2{font-size:15px}
+.list-heading p{font-size:10px}
+.completion-label{font-size:9px;padding:4px 6px}
+.view-tabs{gap:20px;padding-inline:16px}
+.view-tab{font-size:11px;padding-block:12px}
+.view-tab small{font-size:9px}
+.toolbar{padding:15px 16px 12px;gap:7px;flex-wrap:wrap}
+.search{flex-basis:100%;max-width:none}
+.toolbar-spacer{display:none}
+.toolbar>select{flex:1;height:35px;font-size:11px}
+.filter-menu{margin-left:auto}
+.filter-menu summary{font-size:11px;height:35px}
+.meta{padding:0 16px 10px}
+.filter-popover{width:240px}
+.table-scroll{overflow:visible}
+thead{display:none}
+table,tbody{display:block}
+tbody tr{display:grid;grid-template-columns:1fr auto;gap:12px 8px;padding:18px 16px;border-top:1px solid var(--border)}
+tbody td{padding:0;border:0;min-width:0}
+.c-main{grid-column:1/-1}
+.company-avatar{height:36px;width:36px}
+.company-cell{gap:11px;align-items:flex-start}
+.company-name{font-size:10px;max-width:calc(100vw - 115px)}
+.role{font-size:12px;max-width:calc(100vw - 115px);-webkit-line-clamp:2}
+.location{font-size:9px}
+.c-date{grid-column:1;grid-row:2;padding-left:47px!important}
+.date{font-size:10px}
+.date-sub{display:none}
+.c-pay{grid-column:1;grid-row:3;padding-left:47px!important}
+.pay{font-size:10px}
+.c-reply{grid-column:2;grid-row:2;text-align:right}
+.detail-cell{grid-column:2;grid-row:3;justify-self:end}
+.detail-btn{height:25px;width:28px}
+.pill{font-size:9px;padding:3px 7px}
+.foot{padding:14px 16px;font-size:9px}
+.foot span:last-child{display:none}
+.page-footer{font-size:9px;padding-top:18px}
+.panels{grid-template-columns:1fr}
+.detail-content{padding:25px 22px}
+.detail-content h2{font-size:22px}
+.detail-top{padding:17px 20px}
+}
 
-<section class="card list">
-  <div class="toolbar">
-    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search company, role or notes"></div>
-    <div class="filters">
-      <select id="freply"><option value="all">All replies</option><option value="pos">Positive</option><option value="neg">Negative</option><option value="neu">Neutral</option><option value="none">No reply</option></select>
-      <select id="fstatus"></select>
-      <select id="fcohort"></select>
-      <select id="fchannel"></select>
-      <select id="sort">
-        <option value="id">Sort: Application #</option>
-        <option value="sent">Sort: Positive first</option>
-        <option value="reply">Sort: Latest reply</option>
-        <option value="company">Sort: Company A–Z</option>
-      </select>
-    </div>
-    <div class="meta"><span id="count"></span><button class="clear" id="clear" onclick="clearFilters()" hidden>Clear filters</button></div>
-  </div>
-  <table>
-    <thead><tr><th>Company & role</th><th>Reply</th><th>Status</th><th>Completed</th><th>Channel</th><th>Notes</th><th></th></tr></thead>
-    <tbody id="body"></tbody>
-  </table>
-  <div class="empty" id="empty">No applications match these filters.</div>
-  <div class="foot">Only completed applications are shown. Pending applications stay saved privately. Reply type comes from the Status column, set by the Gmail reply monitor. 👍 / 👎 mark a reply yourself and are saved on this device only.</div>
-</section>
-</div>
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#111b22;--surface:#18262e;--surface2:#213039;--border:#2b3b44;--text:#e0eaf0;--muted:#a5b7bf;--faint:#a0b1ba;--accent:#70cfb3;--accent-soft:#213d37;--pos:#79d3b1;--pos-soft:#213d33;--neg:#f3a2a7;--neg-soft:#452d35;--neu:#e5c18a;--neu-soft:#3e362b;--none-soft:#263741}
+.company-avatar,.wins-icon{background:var(--accent-soft);border-color:var(--border);color:var(--accent)}
+.wins{background:#192f2c}
+.avatar{background:var(--surface2);color:var(--muted)}
+.nav-count{background:var(--surface)!important}
+.tiles button:hover,tbody tr:hover,th{background:#1b2b33}
+.p-none{color:var(--muted)}
+.primary-btn{color:#10271f;background:var(--accent)}
+.primary-btn:hover{background:#8bddc3}
+.metric-caption svg{color:var(--muted)}
+}
 
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+*{animation:none!important;transition:none!important}
+}
+
+</style></head><body>
+<a class="sr-only" href="#applications">Skip to applications</a>
+<aside class="sidebar" aria-label="Workspace navigation"><a class="brand" href="#overview"><span class="brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0M12 12v3"/></svg></span><span>Career tracker<span style="color:var(--accent)">.</span></span></a><p class="nav-label">Workspace</p><nav><a class="nav-item active" href="#overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Overview</span></a><a class="nav-item" href="#applications"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0M12 12v3"/></svg><span>Applications</span><span class="nav-count" id="nav-count">—</span></a></nav><div class="sidebar-bottom"><div class="sidebar-note"><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Submitted applications</b>Every application here has a confirmed submission.</div><div class="profile"><span class="avatar">PG</span><div><strong>Prajwath Gowda</strong><small>Personal workspace</small></div></div></div></aside>
+<main class="wrap" id="overview"><div class="topbar"><div class="breadcrumb">Workspace<span>/</span><b>Overview</b></div><div class="actions"><button class="ibtn" id="alertbtn" onclick="enableAlerts()" aria-label="Enable reply notifications" title="Notify me about positive replies"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21h4"/></svg><span class="lbl">Alerts</span></button><button class="ibtn" onclick="exportCSV()" aria-label="Export applications" title="Export filtered applications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15v5h14v-5M12 3v12m-5-5 5 5 5-5"/></svg><span class="lbl">Export</span></button><button class="ibtn" onclick="load()" aria-label="Refresh applications" title="Refresh applications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5 7a8 8 0 0 1 13-2l2 2M4 17l2 2a8 8 0 0 0 13-2"/></svg></button></div></div>
+<header class="heading"><div><p class="eyebrow">A little closer to what's next</p><h1>Application overview</h1><p class="intro">Your applications, replies, and next opportunities. All in one place.</p></div><div class="sync" role="status"><i class="live"></i><span id="sub">Connecting to your tracker…</span></div></header>
+<section class="metrics" aria-label="Application statistics"><div class="metric"><div class="metric-caption">Applications sent<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0M12 12v3"/></svg></div><div class="metric-number" id="total">—</div><div class="metric-foot"><span id="replied">0 replies</span> · <strong id="rrate">0%</strong> reply rate</div><span id="todo" hidden></span><span id="prate" hidden></span><div id="sentbar" hidden></div></div><div class="tiles" id="tiles"></div></section>
+<section class="wins" id="reply-updates" aria-label="Latest positive replies"><span class="wins-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div class="wins-copy"><strong id="wins-title">Waiting for your first reply</strong><p id="wins-description">Employer responses will appear here when recorded.</p><div class="wins-list" id="wins"></div></div><span class="small" id="wins-count"></span></section>
+<section class="panels"><div class="panel analysis" hidden><h2>By fit</h2><div id="cohorts"></div></div><div class="panel analysis" hidden><h2>By channel</h2><div id="channels"></div></div></section>
+<section class="list" id="applications" aria-labelledby="applications-title"><div class="list-heading"><div><h2 id="applications-title">Your applications</h2><p>A clear view of every role you've applied for.</p></div><span class="completion-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Completed only</span></div>
+<div class="view-tabs" aria-label="Filter applications by reply"><button class="view-tab" data-reply="all" aria-pressed="true">All applications <small id="tab-all">0</small></button><button class="view-tab" data-reply="none" aria-pressed="false">Awaiting reply <small id="tab-none">0</small></button><button class="view-tab" data-reply="pos" aria-pressed="false">Positive <small id="tab-pos">0</small></button><button class="view-tab" data-reply="responded" aria-pressed="false">All replies <small id="tab-responded">0</small></button></div>
+<div class="toolbar"><div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><label class="sr-only" for="q">Search applications</label><input id="q" type="search" autocomplete="off" placeholder="Search company, role, or location…"></div><span class="toolbar-spacer"></span><label class="sr-only" for="sort">Sort applications</label><select id="sort"><option value="newest">Newest first</option><option value="company">Company A–Z</option><option value="sent">Positive replies first</option><option value="reply">Latest reply</option><option value="id">Oldest first</option></select><details class="filter-menu"><summary class="ibtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg>Filters</summary><div class="filter-popover"><label>Reply type<select id="freply"><option value="all">All applications</option><option value="none">Awaiting reply</option><option value="pos">Positive replies</option><option value="neg">Rejections</option><option value="neu">Other replies</option><option value="responded">All replies</option></select></label><label>Status<select id="fstatus"></select></label><label>Channel<select id="fchannel"></select></label><label>Fit<select id="fcohort"></select></label></div></details></div>
+<div class="meta"><span id="count">Loading applications…</span><button class="clear" id="clear" onclick="clearFilters()" hidden>Clear filters</button></div><div class="table-scroll"><table aria-label="Completed job applications"><thead><tr><th>Company & role</th><th>Submitted</th><th>Advertised pay</th><th>Reply status</th><th><span class="sr-only">Details</span></th></tr></thead><tbody id="body"></tbody></table></div><div class="empty" id="empty"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><h3>No applications found</h3><p>Try another search or adjust your filters.</p><button class="ibtn" onclick="clearFilters()">Show all applications</button></div><div class="foot"><span>Only confirmed submissions. Updated automatically.</span><span>Advertised pay comes from the job listing.</span></div></section><footer class="page-footer"><span>One application at a time.</span><span>Career tracker · Personal workspace</span></footer></main>
+<dialog class="detail-dialog" id="application-detail" aria-labelledby="detail-title"><div class="detail-top"><span>Application details</span><button class="close-btn" onclick="closeDetail()" aria-label="Close application details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div><div class="detail-content" id="detail-content"></div></dialog>
 <script>
+const ICONS={"briefcase": "<rect x=\"3\" y=\"7\" width=\"18\" height=\"14\" rx=\"3\"/><path d=\"M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0M12 12v3\"/>", "grid": "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/>", "check": "<path d=\"m5 12 4 4L19 6\"/>", "bell": "<path d=\"M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21h4\"/>", "download": "<path d=\"M5 15v5h14v-5M12 3v12m-5-5 5 5 5-5\"/>", "refresh": "<path d=\"M20 7v5h-5M4 17v-5h5M5 7a8 8 0 0 1 13-2l2 2M4 17l2 2a8 8 0 0 0 13-2\"/>", "search": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 5 5\"/>", "filter": "<path d=\"M4 7h16M7 12h10M10 17h4\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>", "arrow": "<path d=\"m9 5 7 7-7 7\"/>", "close": "<path d=\"m6 6 12 12M6 18 18 6\"/>", "message": "<path d=\"M21 11.5a8.5 8.5 0 0 1-8.5 8.5H3l2-5a8.5 8.5 0 1 1 16-3.5Z\"/>", "external": "<path d=\"M14 3h7v7M21 3 10 14M10 4H4v16h16v-6\"/>"};
+function icon(name){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONS[name]+'</svg>';}
+
 const SENT = {pos:{label:'Positive',desc:'Interview · test · offer'},neg:{label:'Negative',desc:'Rejections'},neu:{label:'Neutral',desc:'Auto-replies · other'},none:{label:'No reply',desc:'Waiting to hear back'},todo:{label:'Not submitted',desc:'Pending · blocked · skipped'}};
 const COLOR = {pos:'var(--pos)',neg:'var(--neg)',neu:'var(--neu)',none:'var(--none)',todo:'var(--accent)'};
 const POS = ['interview','assessment','shortlist','offer','positive'];
@@ -290,58 +405,61 @@ function tally(list){ const t={pos:0,neg:0,neu:0,none:0,todo:0}; list.forEach(d=
 const segBar = (t,n) => ['pos','neu','neg','none'].filter(k=>t[k]).map(k=>`<span style="width:${t[k]/n*100}%;background:${COLOR[k]}"></span>`).join('');
 
 function renderStats(){
-  const t=tally(data), n=data.length-t.todo, replied=t.pos+t.neg+t.neu, f=$('freply').value;
-  $('total').textContent=n;
+  const t=tally(data), n=data.length, replied=t.pos+t.neg+t.neu, f=$('freply').value;
+  $('total').textContent=n; $('nav-count').textContent=n;
   $('replied').textContent=`${replied} ${replied===1?'reply':'replies'}`;
-  const needs=data.filter(d=>(d.Status||'').toLowerCase()==='needs you').length;
-  $('todo').innerHTML=t.todo?`<button class="todo-btn ${f==='todo'?'on':''}" onclick="setFilter('todo')">${t.todo} not submitted${needs?` · ${needs} need you`:''} →</button>`:'';
-  $('rrate').textContent=(n?replied/n*100:0).toFixed(1)+'%';
+  $('rrate').textContent=(n?replied/n*100:0).toFixed(0)+'%';
   $('prate').textContent=(replied?t.pos/replied*100:0).toFixed(0)+'%';
-  $('sentbar').innerHTML=n?segBar(t,n):'';
-  $('tiles').innerHTML=['pos','neg','neu','none'].map(k=>`<button class="tile t-${k} ${f===k?'on':''}" onclick="setFilter('${k}')"><div class="t"><i></i>${SENT[k].label}</div><div class="n">${t[k]}</div><div class="d">${SENT[k].desc}</div></button>`).join('');
-
+  const cards=[['none','Awaiting reply',t.none,'With the hiring team','clock'],['pos','Positive replies',t.pos,'Interviews, tests & offers','check'],['responded','Employer replies',replied,'All recorded responses','message']];
+  $('tiles').innerHTML=cards.map(([key,label,count,description,symbol])=>`<button class="metric ${key==='pos'?'metric-positive':''} ${f===key?'on':''}" onclick="setFilter('${key}')" aria-label="${label}: ${count}" aria-pressed="${f===key}"><div class="metric-caption">${label}${icon(symbol)}</div><div class="metric-number">${count}</div><div class="metric-foot">${description}</div></button>`).join('');
+  for(const [key,count] of Object.entries({all:n,none:t.none,pos:t.pos,responded:replied})) $('tab-'+key).textContent=count;
+  document.querySelectorAll('[data-reply]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.reply===f)));
   const wins=data.filter(d=>sentiment(d)==='pos').sort((a,b)=>(b.Response_Date||'').localeCompare(a.Response_Date||''));
-  $('wins-count').textContent=wins.length?`${wins.length} so far`:'';
-  $('wins').innerHTML=wins.length
-    ? wins.map(d=>`<div class="win"><em>${esc(d.Status)}</em><b>${esc(d.Company)}</b><span>${esc(d.Job_Title)}</span><span>${d.Response_Date?'Replied '+esc(fmtDate(d.Response_Date)):''}</span></div>`).join('')
-    : `<div class="wins-empty">No positive replies yet. Interviews, tests and offers will show up here first.</div>`;
-
-  const group=key=>{ const m={}; data.forEach(d=>(m[d[key]||'—']=m[d[key]||'—']||[]).push(d)); return Object.entries(m).sort((a,b)=>b[1].length-a[1].length).map(([k,l])=>{ const t=tally(l); return `<div class="row"><span title="${esc(k)}">${esc(k)}</span><div class="bar">${segBar(t,l.length)}</div><span>${t.pos}+ ${t.neg}− / ${l.length}</span></div>`; }).join(''); };
-  $('cohorts').innerHTML=group('_c'); $('channels').innerHTML=group('Channel');
-  updateSyncStatus();
+  $('wins-title').textContent=wins.length?'Good news worth a closer look':'Waiting for your first positive reply';
+  $('wins-description').textContent=wins.length?'Your latest interviews, assessments and next steps.':'Interviews, assessments and offers will appear here when recorded.';
+  $('wins-count').textContent=wins.length?`${wins.length} positive`:'';
+  $('wins').innerHTML=wins.map(d=>`<div class="win"><em>${esc(d.Status)}</em><b>${esc(d.Company)}</b><span>${esc(d.Job_Title)}</span></div>`).join('');
+  const group=key=>{const m={};data.forEach(d=>(m[d[key]||'—']=m[d[key]||'—']||[]).push(d));return Object.entries(m).sort((a,b)=>b[1].length-a[1].length).map(([key,list])=>`<div class="row"><span>${esc(key)}</span><div class="bar">${segBar(tally(list),list.length)}</div><span>${list.length} applications</span></div>`).join('');};
+  $('cohorts').innerHTML=group('_c');$('channels').innerHTML=group('Channel');updateSyncStatus();
 }
 
 function visible(){
   const q=$('q').value.toLowerCase(), f=$('freply').value, s=$('fstatus').value, c=$('fcohort').value, ch=$('fchannel').value;
-  let l=data.filter(d=>(f==='all'||sentiment(d)===f)&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
+  let l=data.filter(d=>(f==='all'||(f==='responded'?sentiment(d)!=='none':sentiment(d)===f))&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
   const so=$('sort').value, rank={pos:0,neu:1,neg:2,none:3,todo:4};
   if(so==='company') l.sort((a,b)=>a.Company.localeCompare(b.Company));
   else if(so==='reply') l.sort((a,b)=>(b.Response_Date||'').localeCompare(a.Response_Date||''));
   else if(so==='sent') l.sort((a,b)=>rank[sentiment(a)]-rank[sentiment(b)]);
+  else if(so==='newest') l.sort((a,b)=>(b.Date_Applied||'').localeCompare(a.Date_Applied||'')||+b.Application_ID-+a.Application_ID);
   else l.sort((a,b)=>+a.Application_ID-+b.Application_ID);
   return l;
 }
 
+function initials(company){return (company||'?').replace(/[^a-zA-Z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function payLabel(d){return !d.Advertised_CTC||/^not disclosed/i.test(d.Advertised_CTC)?'Not listed':d.Advertised_CTC.replace(/^Salary:\s*/i,'');}
 function renderTable(){
-  const l=visible();
-  const filtered=$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
-  $('count').textContent=filtered?`${l.length} of ${data.length} applications`:`${data.length} applications`;
-  $('clear').hidden=!filtered;
-  $('empty').style.display=l.length?'none':'block';
-  $('body').innerHTML=l.map(d=>{ const k=sentiment(d), id=esc(d.Application_ID), url=/^https?:\/\//.test(d.Job_URL)?esc(d.Job_URL):'';
-    const role=url?`<a class="role" href="${url}" target="_blank" rel="noopener">${esc(d.Job_Title)} ↗</a>`:`<span class="role">${esc(d.Job_Title)}</span>`;
-    const meta=`#${id} · ${esc(d.Channel||'—')} · ${esc(d.Status||'Not submitted')}${d.Date_Applied?' · applied '+esc(fmtDate(d.Date_Applied)):''}`;
-    return `<tr>
-      <td class="c-main"><div class="co">${esc(d.Company)}</div>${role}</td>
-      <td class="c-reply"><span class="pill p-${k}${(d.Status||'').toLowerCase()==='needs you'?' p-needs':''}"><i></i>${k==='todo'?esc(d.Status):SENT[k].label}</span>${overrides[d.Application_ID]?'<span class="edited">edited</span>':''}${d.Response_Date?`<div class="small" style="margin-top:4px">${esc(fmtDate(d.Response_Date))}</div>`:''}</td>
-      <td class="d-only small">${esc(d.Status||'Not submitted')}</td>
-      <td class="c-completed"><span class="pill ${applicationCompleted(d)?'p-pos':'p-none'}" aria-label="Completed: ${applicationCompleted(d)?'Yes':'No'}">${applicationCompleted(d)?'✓ Completed':'Not completed'}</span></td>
-      <td class="d-only small">${esc(d.Channel)}<div>#${id}</div></td>
-      <td class="m-only c-meta small">${meta}</td>
-      <td class="c-notes"><div class="notes" title="${esc(d.Notes)}">${esc(d.Notes)}</div>${d.Advertised_CTC?`<div class="small">Advertised pay: ${esc(d.Advertised_CTC)}</div>`:''}${d.Perks?`<div class="small">Perks: ${esc(d.Perks)}</div>`:''}${d.Resume_File&&/^output\/pdf\/[A-Za-z0-9_./-]+\.pdf$/.test(d.Resume_File)&&['localhost','127.0.0.1'].includes(location.hostname)?`<a class="small" href="/${esc(d.Resume_File)}" target="_blank" rel="noopener">View JD-tailored resume PDF</a>`:''}</td>
-      <td class="c-mark"><div class="mark"><button title="Mark positive" aria-label="Mark positive" onclick="mark('${id}','pos')">👍</button><button title="Mark negative" aria-label="Mark negative" onclick="mark('${id}','neg')">👎</button><button title="Reset" aria-label="Reset" onclick="mark('${id}','')">↺</button></div></td>
-    </tr>`; }).join('');
+  const list=visible(), filtered=$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
+  $('count').textContent=filtered?`${list.length} of ${data.length} applications`:`${data.length} applications`;
+  $('clear').hidden=!filtered; $('empty').style.display=list.length?'none':'block';
+  $('body').innerHTML=list.map(d=>{
+    const k=sentiment(d), url=/^https?:\/\//i.test(d.Job_URL)?esc(d.Job_URL):'', title=esc(d.Job_Title), label=k==='none'?'Awaiting reply':SENT[k].label;
+    return `<tr><td class="c-main"><div class="company-cell"><span class="company-avatar" aria-hidden="true">${esc(initials(d.Company))}</span><div class="company-info"><div class="company-name" title="${esc(d.Company)}">${esc(d.Company)}</div>${url?`<a class="role" href="${url}" target="_blank" rel="noopener">${title}</a>`:`<span class="role">${title}</span>`}<div class="location">${esc(d.Location||d.Channel||'')}</div></div></div></td><td class="c-date"><div class="date">${d.Date_Applied?esc(fmtDate(d.Date_Applied)):'Date not recorded'}</div><div class="date-sub">${esc(d.Channel||'Submitted')}</div></td><td class="c-pay"><div class="pay ${payLabel(d)==='Not listed'?'undisclosed':''}">${esc(payLabel(d))}</div></td><td class="c-reply"><span class="pill p-${k}"><i></i>${label}</span>${overrides[d.Application_ID]?'<span class="edited">Marked on this device</span>':''}</td><td class="detail-cell"><button class="detail-btn" data-application-id="${esc(d.Application_ID)}" aria-label="View application at ${esc(d.Company)}">${icon('arrow')}</button></td></tr>`;
+  }).join('');
 }
+let selectedApplicationId=null;
+let detailTrigger=null;
+function renderDetail(){
+  const d=data.find(d=>d.Application_ID===selectedApplicationId);if(!d)return;
+  const k=sentiment(d), url=/^https?:\/\//i.test(d.Job_URL)?d.Job_URL:'', local=['localhost','127.0.0.1'].includes(location.hostname), resume=local&&/^output\/pdf\/[A-Za-z0-9_./-]+\.pdf$/.test(d.Resume_File||'')?'/'+d.Resume_File:'';
+  $('detail-content').innerHTML=`<div class="company-avatar">${esc(initials(d.Company))}</div><p class="detail-company">${esc(d.Company)}</p><h2 id="detail-title">${esc(d.Job_Title)}</h2><span class="pill p-pos" aria-label="Completed: Yes">${icon('check')} Application submitted</span><p class="detail-location">${esc(d.Location||'Location not specified')}</p><dl class="detail-grid"><div><dt>Submitted</dt><dd>${d.Date_Applied?esc(fmtDate(d.Date_Applied)):'Not recorded'}</dd></div><div><dt>Reply status</dt><dd><span class="pill p-${k}">${k==='none'?'Awaiting reply':SENT[k].label}</span></dd></div><div><dt>Application channel</dt><dd>${esc(d.Channel||'Not recorded')}</dd></div><div><dt>Application number</dt><dd>#${esc(d.Application_ID)}</dd></div></dl><section class="detail-section"><h3>Advertised compensation</h3><p>${esc(payLabel(d))}</p></section><section class="detail-section"><h3>Perks & work arrangement</h3><p>${esc(d.Perks||'Not disclosed in the job listing').replace(/; /g,'\n')}</p></section><section class="detail-section"><h3>Application notes</h3><p>${esc(d.Notes||'Application submitted.')}</p></section><div class="detail-actions">${url?`<a class="primary-btn" href="${esc(url)}" target="_blank" rel="noopener">View job listing ${icon('external')}</a>`:''}${resume?`<a class="ibtn" href="${esc(resume)}" target="_blank" rel="noopener">View tailored resume ${icon('external')}</a>`:''}</div><section class="detail-section"><h3>Record a reply yourself</h3><div class="mark"><button onclick="markSelected('pos')">Positive reply</button><button onclick="markSelected('neg')">Negative reply</button><button onclick="markSelected('')">Reset</button></div><p class="device-note">Manual reply marks are saved on this device.</p></section>`;
+}
+function openDetail(id,trigger){selectedApplicationId=id;detailTrigger=trigger;renderDetail();$('application-detail').showModal();}
+function closeDetail(){$('application-detail').close();}
+function markSelected(value){mark(selectedApplicationId,value);renderDetail();}
+$('body').addEventListener('click',event=>{const button=event.target.closest('[data-application-id]');if(button)openDetail(button.dataset.applicationId,button);});
+$('application-detail').addEventListener('close',()=>{const target=[...document.querySelectorAll('[data-application-id]')].find(b=>b.dataset.applicationId===selectedApplicationId);(target||$('q')).focus();});
+$('application-detail').addEventListener('click',event=>{if(event.target===$('application-detail')){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closeDetail();}});
+document.querySelectorAll('[data-reply]').forEach(button=>button.addEventListener('click',()=>{$('freply').value=button.dataset.reply;render();}));
 
 function render(){ renderStats(); renderTable(); }
 function setFilter(f){ $('freply').value=$('freply').value===f?'all':f; render(); }
@@ -374,6 +492,4 @@ function checkNewPositives(){
 ['q','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
 load(); setInterval(load,5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden) load();});
-</script>
-</body>
-</html>
+</script></body></html>
