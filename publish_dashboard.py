@@ -26,6 +26,15 @@ PUBLIC = {'Application_ID','Company','Job_Title','Location','Job_URL',
           'Advertised_CTC','Perks'}
 
 
+def application_completed(row):
+    status = (row.get('Status') or '').strip().lower()
+    if not status or status in {'to apply', 'needs you', 'skipped', 'submission uncertain'}:
+        return False
+    return (status == 'applied' or 'reject' in status
+            or any(word in status for word in ('interview', 'assessment', 'shortlist', 'offer', 'positive'))
+            or (row.get('Reverted_Back') or '').strip().lower() == 'yes')
+
+
 def public_snapshot(content):
     source=csv.DictReader(io.StringIO(content.decode('utf-8-sig')))
     if not source.fieldnames or not {'Application_ID','Company','Job_Title','Status'} <= set(source.fieldnames):
@@ -33,6 +42,8 @@ def public_snapshot(content):
     out=io.StringIO(newline='')
     writer=csv.DictWriter(out,fieldnames=COLUMNS,lineterminator='\n');writer.writeheader()
     for row in source:
+        if not application_completed(row):
+            continue
         item={key:row.get(key,'') if key in PUBLIC else '' for key in COLUMNS}
         prefix=next((label for label in ['Strong fit','Stretch','Weak fit','Good fit'] if row.get('Notes','').lower().startswith(label.lower())),'Good fit')
         status=row.get('Status','').strip().lower()

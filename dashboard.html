@@ -186,8 +186,7 @@ tr:hover .mark,.mark:focus-within{opacity:1}
   <div class="toolbar">
     <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search company, role or notes"></div>
     <div class="filters">
-      <select id="fcompleted" aria-label="Completion"><option value="">All applications</option><option value="yes">Completed only</option><option value="no">Not completed</option></select>
-      <select id="freply"><option value="all">All replies</option><option value="pos">Positive</option><option value="neg">Negative</option><option value="neu">Neutral</option><option value="none">No reply</option><option value="todo">To apply</option></select>
+      <select id="freply"><option value="all">All replies</option><option value="pos">Positive</option><option value="neg">Negative</option><option value="neu">Neutral</option><option value="none">No reply</option></select>
       <select id="fstatus"></select>
       <select id="fcohort"></select>
       <select id="fchannel"></select>
@@ -205,7 +204,7 @@ tr:hover .mark,.mark:focus-within{opacity:1}
     <tbody id="body"></tbody>
   </table>
   <div class="empty" id="empty">No applications match these filters.</div>
-  <div class="foot">Completed means the application was submitted; pending, blocked and uncertain submissions are not completed. Reply type comes from the Status column, set by the Gmail reply monitor. 👍 / 👎 mark a reply yourself and are saved on this device only.</div>
+  <div class="foot">Only completed applications are shown. Pending applications stay saved privately. Reply type comes from the Status column, set by the Gmail reply monitor. 👍 / 👎 mark a reply yourself and are saved on this device only.</div>
 </section>
 </div>
 
@@ -268,7 +267,7 @@ async function load(){
     if(!r.ok) throw new Error('HTTP '+r.status);
     const text = await r.text();
     if(!text.startsWith('Application_ID,')) throw new Error('Invalid tracker data');
-    data=parseCSV(text).map(d=>({...d,_c:fitOf(d.Notes)}));
+    data=parseCSV(text).filter(applicationCompleted).map(d=>({...d,_c:fitOf(d.Notes)}));
     const fill=(el,label,vals)=>{ const cur=el.value; el.innerHTML=`<option value="">${label}</option>`+[...new Set(vals)].filter(Boolean).sort().map(v=>`<option>${esc(v)}</option>`).join(''); el.value=cur; };
     fill($('fstatus'),'All statuses',data.map(d=>d.Status));
     fill($('fcohort'),'All fits',data.map(d=>d._c));
@@ -313,8 +312,8 @@ function renderStats(){
 }
 
 function visible(){
-  const q=$('q').value.toLowerCase(), f=$('freply').value, s=$('fstatus').value, c=$('fcohort').value, ch=$('fchannel').value, completed=$('fcompleted').value;
-  let l=data.filter(d=>(!completed||applicationCompleted(d)===(completed==='yes'))&&(f==='all'||sentiment(d)===f)&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
+  const q=$('q').value.toLowerCase(), f=$('freply').value, s=$('fstatus').value, c=$('fcohort').value, ch=$('fchannel').value;
+  let l=data.filter(d=>(f==='all'||sentiment(d)===f)&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
   const so=$('sort').value, rank={pos:0,neu:1,neg:2,none:3,todo:4};
   if(so==='company') l.sort((a,b)=>a.Company.localeCompare(b.Company));
   else if(so==='reply') l.sort((a,b)=>(b.Response_Date||'').localeCompare(a.Response_Date||''));
@@ -325,7 +324,7 @@ function visible(){
 
 function renderTable(){
   const l=visible();
-  const filtered=$('fcompleted').value||$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
+  const filtered=$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
   $('count').textContent=filtered?`${l.length} of ${data.length} applications`:`${data.length} applications`;
   $('clear').hidden=!filtered;
   $('empty').style.display=l.length?'none':'block';
@@ -346,7 +345,7 @@ function renderTable(){
 
 function render(){ renderStats(); renderTable(); }
 function setFilter(f){ $('freply').value=$('freply').value===f?'all':f; render(); }
-function clearFilters(){ $('q').value=''; ['fcompleted','fstatus','fcohort','fchannel'].forEach(i=>$(i).value=''); $('freply').value='all'; render(); }
+function clearFilters(){ $('q').value=''; ['fstatus','fcohort','fchannel'].forEach(i=>$(i).value=''); $('freply').value='all'; render(); }
 function mark(id,v){ if(v) overrides[id]=v; else delete overrides[id]; try{localStorage.setItem('sentOverrides',JSON.stringify(overrides));}catch(e){} render(); }
 function exportCSV(){
   const cols=['Application_ID','Company','Job_Title','Channel','Status','Response_Date','Notes','Advertised_CTC','Perks','Resume_File','Batch_ID'];
@@ -372,7 +371,7 @@ function checkNewPositives(){
   try{ localStorage.setItem('seenPositive',JSON.stringify(ids)); }catch(e){}
 }
 
-['q','fcompleted','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
+['q','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
 load(); setInterval(load,5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden) load();});
 </script>

@@ -58,10 +58,15 @@ class PublisherTests(unittest.TestCase):
         self.source.write_bytes(before.replace(b'Applied', b'Needs You'))
         publisher.publish(self.source, cache, str(origin))
         self.assertEqual((cache / 'index.html').read_text(), 'New public code')
-        self.assertIn(b'Needs You', (cache / publisher.PATHS[1]).read_bytes())
+        self.assertEqual(list(csv.DictReader(io.StringIO((cache / publisher.PATHS[1]).read_text()))), [])
         head = self.git(cache, 'rev-parse', 'HEAD')
         publisher.publish(self.source, cache, str(origin))
         self.assertEqual(head, self.git(cache, 'rev-parse', 'HEAD'))
+
+    def test_public_snapshot_keeps_only_completed_and_preserves_source(self):
+        content = b'Application_ID,Company,Job_Title,Status,Reverted_Back\n1,A,Engineer,Applied,No\n2,B,Engineer,Needs You,Yes\n3,C,Engineer,Submission uncertain,Yes\n4,D,Engineer,To Apply,No\n5,E,Engineer,Skipped,No\n6,F,Engineer,Interview,Yes\n7,G,Engineer,Rejected,Yes\n'
+        rows = list(csv.DictReader(io.StringIO(publisher.public_snapshot(content).decode())))
+        self.assertEqual([row['Application_ID'] for row in rows], ['1', '6', '7'])
 
     def test_refuses_private_workspace(self):
         with self.assertRaisesRegex(RuntimeError, 'separate'):

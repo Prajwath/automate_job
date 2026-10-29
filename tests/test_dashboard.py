@@ -47,7 +47,12 @@ class DashboardTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelector('#sub').textContent.startsWith('Live')")
         self.assertEqual(self.page.locator('#total').inner_text(),'1')
         self.assertEqual(self.page.locator('#replied').inner_text(),'0 replies')
-        self.assertIn('2 not submitted',self.page.locator('#todo').inner_text())
+        self.assertEqual(self.page.locator('#todo').inner_text(),'')
+        self.assertEqual(self.page.locator('#body tr').count(),1)
+        self.page.locator('#q').fill('missing')
+        self.page.get_by_role('button',name='Clear filters',exact=True).click()
+        self.assertEqual(self.page.locator('#body tr').count(),1)
+        self.assertEqual(self.page.locator('#fcompleted').count(),0)
 
     def test_local_reply_override_cannot_turn_blocked_form_into_applied(self):
         self.page.goto('http://localhost:5050/dashboard.html')
