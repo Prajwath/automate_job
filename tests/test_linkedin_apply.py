@@ -134,6 +134,23 @@ class OfflineBrowserTests(unittest.TestCase):
         self.assertEqual(result.status, "Submission uncertain")
         self.assertEqual(self.page.evaluate("window.submitted"), 1)
 
+    def test_current_pay_prefill_is_withheld_and_numeric_requirement_blocks(self):
+        self.app['_withhold_current_salary'] = True
+        self.app['current ctc'] = ''
+        self.form('<label>Current Salary ?<input type="text" value="800000" required></label>', action="")
+        result = bot.apply_job(self.page, self.app, confirmation_timeout=0.1)
+        self.assertEqual(self.page.locator('input').input_value(), 'Not disclosed')
+        self.assertEqual(result.status, 'Submission uncertain')
+        self.form('<label>Current CTC (LPA)<input type="number" value="8" required></label>')
+        result = bot.apply_job(self.page, self.app)
+        self.assertEqual(self.page.locator('input').input_value(), '')
+        self.assertEqual(result.status, 'Needs You')
+
+    def test_resume_upload_selection_recognizes_native_radios(self):
+        self.page.set_content('<input type="radio" aria-label="role.pdf" checked><input type="radio" aria-label="other.pdf">')
+        self.assertTrue(self.page.evaluate(bot.RESUME_SELECTED, 'role.pdf'))
+        self.assertFalse(self.page.evaluate(bot.RESUME_SELECTED, 'other.pdf'))
+
     def test_unknown_required_question_blocks_submission(self):
         self.form('<label>Years with Rust<input type="number" required></label>')
         result = bot.apply_job(self.page, self.app)
@@ -181,12 +198,45 @@ class OfflineBrowserTests(unittest.TestCase):
         self.assertTrue(self.page.locator('#no').is_checked())
         self.assertFalse(self.page.locator('#yes').is_checked())
 
+    def test_native_radio_choices_with_shared_question_aria_label(self):
+        self.form('''<fieldset><p>Have you completed a Bachelor's Degree?*</p>
+        <div><div><input id="yes" type="radio" name="degree" aria-label="Have you completed a Bachelor's Degree?"><label for="yes"></label></div><p>Yes</p></div>
+        <div><div><input id="no" type="radio" name="degree" aria-label="Have you completed a Bachelor's Degree?"><label for="no"></label></div><p>No</p></div></fieldset>''', action="")
+        answers={bot.normalize("Have you completed a Bachelor's Degree?"):'Yes'}
+        result=bot.apply_job(self.page,self.app,answers,confirmation_timeout=0.1)
+        self.assertEqual(result.status,'Submission uncertain')
+        self.assertTrue(self.page.locator('#yes').is_checked())
+        self.assertFalse(self.page.locator('#no').is_checked())
+
+    def test_native_hidden_radio_is_selected_through_visible_label(self):
+        self.form('''<fieldset><p>Completed Bachelor's Degree?*</p><div>
+        <div><input style="visibility:hidden" id="yes" type="radio" name="degree" aria-label="Completed Bachelor's Degree?"><label for="yes" style="display:inline-block;width:20px;height:20px;border:1px solid black"></label></div><p>Yes</p></div>
+        <div><div><input style="visibility:hidden" id="no" type="radio" name="degree" aria-label="Completed Bachelor's Degree?"><label for="no" style="display:inline-block;width:20px;height:20px;border:1px solid black"></label></div><p>No</p></div></fieldset>''', action="")
+        result=bot.apply_job(self.page,self.app,{bot.normalize("Completed Bachelor's Degree?"):'Yes'},confirmation_timeout=0.1)
+        self.assertEqual(result.status,'Submission uncertain')
+        self.assertTrue(self.page.locator('#yes').is_checked())
+
+    def test_each_answer_recollects_fields_without_reusing_old_markers(self):
+        self.form('''<label>First choice<select aria-label="First choice" required><option value="">Select</option><option>A</option></select></label>
+        <label>Second choice<select aria-label="Second choice" required><option value="">Select</option><option>B</option></select></label>''', action="")
+        result=bot.apply_job(self.page,self.app,{'first choice':'A','second choice':'B'},confirmation_timeout=0.1)
+        self.assertEqual(result.status,'Submission uncertain')
+        self.assertEqual(self.page.locator('select').all_text_contents(),['SelectA','SelectB'])
+        self.assertEqual(self.page.locator('select').evaluate_all('els=>els.map(e=>e.value)'),['A','B'])
+
     def test_fill_is_scoped_to_application_modal(self):
         self.form('<label>Email<input type="email" required></label>', action="")
         self.page.locator("body").evaluate("e => e.insertAdjacentHTML('afterbegin', '<label>Email<input id=outside required></label>')")
         bot.apply_job(self.page, self.app, confirmation_timeout=0.1)
         self.assertEqual(self.page.locator("#outside").input_value(), "")
         self.assertEqual(self.page.locator('.jobs-easy-apply-modal input').input_value(), self.app["email"])
+
+    def test_saved_resume_choices_and_success_toast_do_not_block_selection(self):
+        self.form('''<div role="radio" aria-label="resume.pdf" aria-checked="true"><input type="radio" name="resumes" checked><label></label></div>
+        <div role="radio" aria-label="old.pdf" aria-checked="false"><input type="radio" name="resumes"><label></label></div>
+        <div role="alert">Resume uploaded successfully</div>''')
+        result=bot.apply_job(self.page,self.app,confirmation_timeout=0.3)
+        self.assertEqual(result.status,'Applied')
 
     def test_multiple_steps(self):
         self.page.set_content('''<button onclick="document.querySelector('.jobs-easy-apply-modal').hidden=false">Easy Apply</button>

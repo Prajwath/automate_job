@@ -133,8 +133,8 @@ tr:hover .mark,.mark:focus-within{opacity:1}
   td{padding:0;border:0}
   td.c-main{grid-column:1}
   td.c-reply{grid-column:2;grid-row:1;text-align:right}
-  td.c-meta,td.c-notes,td.c-mark{grid-column:1/-1}
-  td.c-meta{margin-top:4px}
+  td.c-meta,td.c-notes,td.c-mark,td.c-completed{grid-column:1/-1}
+  td.c-meta,td.c-completed{margin-top:4px}
   td.c-notes .notes{max-width:none;margin-top:4px}
   td.c-mark .mark{opacity:1;margin-top:8px}
   td.d-only{display:none}
@@ -186,6 +186,7 @@ tr:hover .mark,.mark:focus-within{opacity:1}
   <div class="toolbar">
     <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search company, role or notes"></div>
     <div class="filters">
+      <select id="fcompleted" aria-label="Completion"><option value="">All applications</option><option value="yes">Completed only</option><option value="no">Not completed</option></select>
       <select id="freply"><option value="all">All replies</option><option value="pos">Positive</option><option value="neg">Negative</option><option value="neu">Neutral</option><option value="none">No reply</option><option value="todo">To apply</option></select>
       <select id="fstatus"></select>
       <select id="fcohort"></select>
@@ -200,11 +201,11 @@ tr:hover .mark,.mark:focus-within{opacity:1}
     <div class="meta"><span id="count"></span><button class="clear" id="clear" onclick="clearFilters()" hidden>Clear filters</button></div>
   </div>
   <table>
-    <thead><tr><th>Company & role</th><th>Reply</th><th>Status</th><th>Channel</th><th>Notes</th><th></th></tr></thead>
+    <thead><tr><th>Company & role</th><th>Reply</th><th>Status</th><th>Completed</th><th>Channel</th><th>Notes</th><th></th></tr></thead>
     <tbody id="body"></tbody>
   </table>
   <div class="empty" id="empty">No applications match these filters.</div>
-  <div class="foot">Reply type comes from the Status column, set by the Gmail reply monitor. 👍 / 👎 mark a reply yourself and are saved on this device only.</div>
+  <div class="foot">Completed means the application was submitted; pending, blocked and uncertain submissions are not completed. Reply type comes from the Status column, set by the Gmail reply monitor. 👍 / 👎 mark a reply yourself and are saved on this device only.</div>
 </section>
 </div>
 
@@ -236,6 +237,13 @@ function parseCSV(text){
 }
 
 function fitOf(notes){ const n=(notes||'').toLowerCase(); return n.startsWith('strong fit')?'Strong fit':n.startsWith('stretch')?'Stretch':n.startsWith('weak fit')?'Weak fit':'Good fit'; }
+
+// Completion describes submission, independent of locally marked replies.
+function applicationCompleted(d){
+  const st=(d.Status||'').trim().toLowerCase();
+  if(!st || ['to apply','needs you','skipped','submission uncertain'].includes(st)) return false;
+  return st==='applied' || st.includes('reject') || POS.some(k=>st.includes(k)) || (d.Reverted_Back||'').toLowerCase()==='yes';
+}
 
 function sentiment(d){
   const st=(d.Status||'').toLowerCase(), rev=(d.Reverted_Back||'').toLowerCase()==='yes';
@@ -305,8 +313,8 @@ function renderStats(){
 }
 
 function visible(){
-  const q=$('q').value.toLowerCase(), f=$('freply').value, s=$('fstatus').value, c=$('fcohort').value, ch=$('fchannel').value;
-  let l=data.filter(d=>(f==='all'||sentiment(d)===f)&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
+  const q=$('q').value.toLowerCase(), f=$('freply').value, s=$('fstatus').value, c=$('fcohort').value, ch=$('fchannel').value, completed=$('fcompleted').value;
+  let l=data.filter(d=>(!completed||applicationCompleted(d)===(completed==='yes'))&&(f==='all'||sentiment(d)===f)&&(!s||d.Status===s)&&(!c||d._c===c)&&(!ch||d.Channel===ch)&&(!q||[d.Company,d.Job_Title,d.Notes,d.Location].some(x=>(x||'').toLowerCase().includes(q))));
   const so=$('sort').value, rank={pos:0,neu:1,neg:2,none:3,todo:4};
   if(so==='company') l.sort((a,b)=>a.Company.localeCompare(b.Company));
   else if(so==='reply') l.sort((a,b)=>(b.Response_Date||'').localeCompare(a.Response_Date||''));
@@ -317,31 +325,32 @@ function visible(){
 
 function renderTable(){
   const l=visible();
-  const filtered=$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
+  const filtered=$('fcompleted').value||$('q').value||$('freply').value!=='all'||$('fstatus').value||$('fcohort').value||$('fchannel').value;
   $('count').textContent=filtered?`${l.length} of ${data.length} applications`:`${data.length} applications`;
   $('clear').hidden=!filtered;
   $('empty').style.display=l.length?'none':'block';
   $('body').innerHTML=l.map(d=>{ const k=sentiment(d), id=esc(d.Application_ID), url=/^https?:\/\//.test(d.Job_URL)?esc(d.Job_URL):'';
     const role=url?`<a class="role" href="${url}" target="_blank" rel="noopener">${esc(d.Job_Title)} ↗</a>`:`<span class="role">${esc(d.Job_Title)}</span>`;
-    const meta=`#${id} · ${esc(d.Channel||'—')} · ${esc(d.Status||'Applied')}${d.Date_Applied?' · applied '+esc(fmtDate(d.Date_Applied)):''}`;
+    const meta=`#${id} · ${esc(d.Channel||'—')} · ${esc(d.Status||'Not submitted')}${d.Date_Applied?' · applied '+esc(fmtDate(d.Date_Applied)):''}`;
     return `<tr>
       <td class="c-main"><div class="co">${esc(d.Company)}</div>${role}</td>
       <td class="c-reply"><span class="pill p-${k}${(d.Status||'').toLowerCase()==='needs you'?' p-needs':''}"><i></i>${k==='todo'?esc(d.Status):SENT[k].label}</span>${overrides[d.Application_ID]?'<span class="edited">edited</span>':''}${d.Response_Date?`<div class="small" style="margin-top:4px">${esc(fmtDate(d.Response_Date))}</div>`:''}</td>
-      <td class="d-only small">${esc(d.Status||'Applied')}</td>
+      <td class="d-only small">${esc(d.Status||'Not submitted')}</td>
+      <td class="c-completed"><span class="pill ${applicationCompleted(d)?'p-pos':'p-none'}" aria-label="Completed: ${applicationCompleted(d)?'Yes':'No'}">${applicationCompleted(d)?'✓ Completed':'Not completed'}</span></td>
       <td class="d-only small">${esc(d.Channel)}<div>#${id}</div></td>
       <td class="m-only c-meta small">${meta}</td>
-      <td class="c-notes"><div class="notes" title="${esc(d.Notes)}">${esc(d.Notes)}</div></td>
+      <td class="c-notes"><div class="notes" title="${esc(d.Notes)}">${esc(d.Notes)}</div>${d.Advertised_CTC?`<div class="small">Advertised pay: ${esc(d.Advertised_CTC)}</div>`:''}${d.Perks?`<div class="small">Perks: ${esc(d.Perks)}</div>`:''}${d.Resume_File&&/^output\/pdf\/[A-Za-z0-9_./-]+\.pdf$/.test(d.Resume_File)&&['localhost','127.0.0.1'].includes(location.hostname)?`<a class="small" href="/${esc(d.Resume_File)}" target="_blank" rel="noopener">View JD-tailored resume PDF</a>`:''}</td>
       <td class="c-mark"><div class="mark"><button title="Mark positive" aria-label="Mark positive" onclick="mark('${id}','pos')">👍</button><button title="Mark negative" aria-label="Mark negative" onclick="mark('${id}','neg')">👎</button><button title="Reset" aria-label="Reset" onclick="mark('${id}','')">↺</button></div></td>
     </tr>`; }).join('');
 }
 
 function render(){ renderStats(); renderTable(); }
 function setFilter(f){ $('freply').value=$('freply').value===f?'all':f; render(); }
-function clearFilters(){ $('q').value=''; ['fstatus','fcohort','fchannel'].forEach(i=>$(i).value=''); $('freply').value='all'; render(); }
+function clearFilters(){ $('q').value=''; ['fcompleted','fstatus','fcohort','fchannel'].forEach(i=>$(i).value=''); $('freply').value='all'; render(); }
 function mark(id,v){ if(v) overrides[id]=v; else delete overrides[id]; try{localStorage.setItem('sentOverrides',JSON.stringify(overrides));}catch(e){} render(); }
 function exportCSV(){
-  const cols=['Application_ID','Company','Job_Title','Channel','Status','Response_Date','Notes'];
-  const out=[cols.concat('Reply_Type').join(',')].concat(visible().map(d=>cols.map(c=>'"'+String(d[c]||'').replace(/"/g,'""')+'"').concat(SENT[sentiment(d)].label).join(',')));
+  const cols=['Application_ID','Company','Job_Title','Channel','Status','Response_Date','Notes','Advertised_CTC','Perks','Resume_File','Batch_ID'];
+  const out=[cols.concat('Completed','Reply_Type').join(',')].concat(visible().map(d=>cols.map(c=>'"'+String(d[c]||'').replace(/"/g,'""')+'"').concat(applicationCompleted(d)?'Yes':'No',SENT[sentiment(d)].label).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([out.join('\n')],{type:'text/csv'})); a.download='applications_filtered.csv'; a.click();
 }
 
@@ -363,7 +372,7 @@ function checkNewPositives(){
   try{ localStorage.setItem('seenPositive',JSON.stringify(ids)); }catch(e){}
 }
 
-['q','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
+['q','fcompleted','freply','fstatus','fcohort','fchannel','sort'].forEach(id=>$(id).addEventListener('input',render));
 load(); setInterval(load,5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden) load();});
 </script>

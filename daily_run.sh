@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Daily job run (installed by setup_daily.sh, runs at 10:00):
-#   1. pull the latest tracker   2. apply phone "Mark applied"/"Skip" taps
-#   3. find new 1-4 yr hybrid Bangalore roles   4. fill and submit applications
-#   5. push the updated tracker so the dashboard updates
+#   1. apply phone actions   2. discover matching roles
+#   3. fill and submit applications   4. publish only when explicitly enabled
 set -u
 cd "$(dirname "$0")"
 PY="${PYTHON:-python3}"
 echo "===== $(date) ====="
-git pull --rebase --autostash -q || echo "git pull failed, continuing with local copy"
+# Update source code separately. Pulling here can overwrite the private tracker
+# and leave an unattended rebase in the application workspace.
 $PY phone_actions.py
 $PY discover_jobs.py
 $PY auto_apply.py --unattended --junior-only

@@ -8,7 +8,8 @@ import socketserver
 import os
 import sys
 import webbrowser
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, unquote
+from pathlib import Path
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 5050
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -17,14 +18,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
+    def allowed_path(self):
+        path=unquote(urlsplit(self.path).path)
+        if path in ('/', '/index.html', '/dashboard.html', '/job_applications.csv', '/favicon.ico'):
+            return True
+        base=Path(DIRECTORY)/'output/pdf'
+        target=(Path(DIRECTORY)/path.lstrip('/')).resolve()
+        return path.startswith('/output/pdf/') and target.is_relative_to(base.resolve()) and target.suffix=='.pdf' and target.is_file()
+
     def do_GET(self):
-        if urlsplit(self.path).path not in ('/', '/index.html', '/dashboard.html', '/job_applications.csv', '/favicon.ico'):
+        if not self.allowed_path():
             self.send_error(404)
             return
         super().do_GET()
 
     def do_HEAD(self):
-        if urlsplit(self.path).path not in ('/', '/index.html', '/dashboard.html', '/job_applications.csv', '/favicon.ico'):
+        if not self.allowed_path():
             self.send_error(404)
             return
         super().do_HEAD()

@@ -125,8 +125,9 @@ def record_job(job, app, status, reason):
     if row is None:
         row = dict.fromkeys(fields, "")
         row["Application_ID"] = str(max([int(r["Application_ID"]) for r in rows if r.get("Application_ID", "").isdigit()] + [0]) + 1)
-        row.update(job, Job_URL=url, Channel="LinkedIn Easy Apply", Reverted_Back="No")
+        row.update(job, Job_URL=url, Channel=job.get("Channel","LinkedIn Easy Apply"), Reverted_Back="No")
         rows.append(row)
+    row.update({key:value for key,value in job.items() if key in fields})
     row.update(Status=status, Notes=reason)
     row["Target_CTC"] = app.get("expected ctc", "")
     if status == "Applied":
@@ -149,17 +150,42 @@ def record_job(job, app, status, reason):
 
 # Collect only the current dialog, including native validity and radio groups.
 COLLECT = r"""root => {
+ root.querySelectorAll('[data-li-field]').forEach(e=>e.removeAttribute('data-li-field'));
+ root.querySelectorAll('[data-li-option]').forEach(e=>e.removeAttribute('data-li-option'));
  const visible = e => !!e.getClientRects().length;
  const clean = s => (s || '').replace(/\s+/g, ' ').replace(/\*/g, '').trim();
- const label = e => clean(e.getAttribute('aria-label') ||
-   (e.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.innerText || '').join(' ') ||
-   (e.labels && [...e.labels].map(l => l.innerText).join(' ')) ||
-   e.getAttribute('placeholder') || e.name || 'Unlabelled field');
+ const label = e => {
+   const explicit=clean(e.getAttribute('aria-label') ||
+     (e.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean).map(id => document.getElementById(id)?.innerText || '').join(' ') ||
+     (e.labels && [...e.labels].map(l => l.innerText).join(' ')) || e.getAttribute('placeholder') || e.name || '');
+   if(explicit) return explicit;
+   if(e.type==='checkbox') {
+     let node=e.parentElement;
+     for(let depth=0;depth<6 && node && node!==root.parentElement;depth++,node=node.parentElement){
+       if(node.querySelectorAll('input,select,textarea').length!==1) break;
+       const text=clean(node.innerText);
+       if(text && !/^(Confirmed|I consent|I agree|Yes|No)$/i.test(text)) return text.replace(/This field is required/gi,'').trim();
+     }
+   }
+   return 'Unlabelled field';
+ };
+ const optionLabel = m => {
+   const direct = clean(m.closest('[role=radio]')?.innerText) || clean([...(m.labels || [])].map(l=>l.innerText).join(' '));
+   if(direct) return direct;
+   let node=m.parentElement;
+   for(let depth=0;depth<5 && node && node!==root.parentElement;depth++,node=node.parentElement){
+     if(node.querySelectorAll('input[type=radio]').length!==1) break;
+     const text=clean(node.innerText);
+     if(text) return text;
+   }
+   return label(m);
+ };
  const out = [], groups = new Set();
  for (const e of root.querySelectorAll('input,select,textarea,[role=combobox]')) {
    if (!visible(e) || e.disabled || e.type === 'hidden' || ['submit','button','reset','file'].includes(e.type)) continue;
    const kind = e.getAttribute('role') === 'combobox' ? 'combobox' : (e.type || e.tagName.toLowerCase());
    const id = 'li' + out.length;
+   if(kind === 'radio' && /\.(?:pdf|docx?)(?:\b|$)/i.test(label(e))) continue;
    if (kind === 'radio') {
      const group = e.closest('fieldset,[role=radiogroup]');
      const key = e.name || group || e;
@@ -177,7 +203,7 @@ COLLECT = r"""root => {
        if(candidate) {question=clean(candidate.innerText);break;}
      }
      members.forEach((m,i) => m.setAttribute('data-li-option', id + ':' + i));
-     out.push({id, kind, label: question || e.closest('[role=radio]')?.getAttribute('aria-label') || clean(group?.querySelector('legend')?.innerText) || label(e), options: members.map(m => clean(m.closest('[role=radio]')?.innerText) || label(m))});
+     out.push({id, kind, label: question || e.closest('[role=radio]')?.getAttribute('aria-label') || clean(group?.querySelector('legend')?.innerText) || label(e), options: members.map(optionLabel)});
      continue;
    }
    if (kind === 'checkbox' && e.checked) continue;
@@ -196,6 +222,11 @@ VALIDATE = r"""root => {
  for (const e of root.querySelectorAll('input,select,textarea,[role=combobox],[role=radiogroup]')) {
    if (!visible(e) || e.disabled || ['hidden','submit','button','reset'].includes(e.type)) continue;
    const label = e.getAttribute('aria-label') || e.closest('[role=radio]')?.getAttribute('aria-label') || e.labels?.[0]?.innerText || e.name || 'Required field';
+   if(e.type === 'radio' && /\.(?:pdf|docx?)(?:\b|$)/i.test(label)) {
+     const choices=[...root.querySelectorAll('input[type=radio]')].filter(r => /\.(?:pdf|docx?)(?:\b|$)/i.test(r.getAttribute('aria-label') || r.closest('[role=radio]')?.getAttribute('aria-label') || r.labels?.[0]?.innerText || ''));
+     if(!choices.some(r=>r.checked || r.closest('[role=radio]')?.getAttribute('aria-checked')==='true') && !problems.includes('Choose a resume')) problems.push('Choose a resume');
+     continue;
+   }
    const required = e.required || e.getAttribute('aria-required') === 'true' || /\*/.test(label) || e.type === 'radio';
    const empty = e.type === 'checkbox' ? !e.checked : e.type === 'radio' ? ![...root.querySelectorAll('input[type=radio]')].some(r => r.name === e.name && r.checked) : e.getAttribute('role') === 'radiogroup' ? !e.querySelector('[aria-checked=true],input:checked') : !e.value;
    const placeholder = e.tagName === 'SELECT' && /^(select|choose|--)/i.test(e.selectedOptions[0]?.text || '');
@@ -209,7 +240,8 @@ VALIDATE = r"""root => {
    }
  }
  for (const e of root.querySelectorAll('.artdeco-inline-feedback--error,[role=alert]')) {
-   if (visible(e) && e.innerText.trim()) problems.push(e.innerText.trim());
+   const text=e.innerText.trim();
+   if (visible(e) && text && (e.classList.contains('artdeco-inline-feedback--error') || /invalid|required|failed|error|must |please (?:enter|select)|missing|went wrong|try again/i.test(text))) problems.push(text);
  }
  return problems;
 }"""
@@ -286,7 +318,35 @@ def first_visible(locator):
     return None
 
 
+RESUME_SELECTED = r"""name => [...document.querySelectorAll('[role=radio],input[type=radio]')].some(e =>
+ (e.getAttribute('aria-label') || e.closest('[role=radio]')?.getAttribute('aria-label')) === name &&
+ (e.checked || e.getAttribute('aria-checked') === 'true' || e.querySelector('input:checked')))
+"""
+
+
 def fill_step(modal, app, answers):
+    if app.get('_withhold_current_salary'):
+        for field in modal.locator('input[type=text],input[type=number],textarea').all():
+            label=field.evaluate("e => e.getAttribute('aria-label') || e.labels?.[0]?.innerText || e.placeholder || ''")
+            if re.search(r'(?:current|present|last drawn).*(?:salary|ctc|compensation|package)',label,re.I) and field.is_visible():
+                field.fill('' if field.get_attribute('type')=='number' else 'Not disclosed')
+    location=first_visible(modal.get_by_placeholder('Enter city or location',exact=True))
+    if location is not None and not app.get('_location_selected'):
+        location.fill(app.get('city','Panjim'))
+        modal.page.wait_for_timeout(900)
+        options=modal.page.get_by_role('option')
+        choices=options.all_inner_texts()
+        match=next((i for i,text in enumerate(choices) if re.search(r'panaji|panjim',text,re.I)),None)
+        if match is None:
+            location.fill('Panaji, Goa')
+            modal.page.wait_for_timeout(1000)
+            choices=options.all_inner_texts()
+            match=next((i for i,text in enumerate(choices) if re.search(r'panaji|panjim',text,re.I)),None)
+        if match is None:
+            raise RuntimeError('Current-city autocomplete needs a verified selection')
+        options.nth(match).click()
+        app['_location_selected']=True
+        modal=application_modal(modal.page)
     # LinkedIn may offer only the verified account email. Record the address
     # actually selected rather than claiming the configured address was used.
     for email in modal.locator('input[type=email], select').all():
@@ -303,7 +363,16 @@ def fill_step(modal, app, answers):
         value = email.input_value()
         if re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
             app['_application_email'] = value
-    uploads = modal.locator('input[type="file"]').all()
+    uploads = [] if app.get('_uploaded_resume') == app['resume path'] else modal.locator('input[type="file"]').all()
+    if not uploads and app.get('_uploaded_resume') != app['resume path']:
+        upload_button = first_visible(modal.get_by_role('button', name=re.compile(r'upload (?:a )?resume', re.I)))
+        if upload_button is not None:
+            with modal.page.expect_file_chooser(timeout=8000) as pending:
+                upload_button.click()
+            pending.value.set_files(app['resume path'])
+            app['_uploaded_resume'] = app['resume path']
+            modal.page.wait_for_function(RESUME_SELECTED, arg=Path(app['resume path']).name, timeout=15000)
+            modal = application_modal(modal.page)
     for upload in uploads:
         label = upload.evaluate("e => [e.id, e.name, e.getAttribute('aria-label'), ...(e.labels || [])].map(x => typeof x === 'string' ? x : x?.innerText || '').join(' ')")
         if re.search(r"cover|certificate|photo|additional|supporting", label, re.I):
@@ -312,33 +381,55 @@ def fill_step(modal, app, answers):
             continue
         if not upload.is_disabled():
             upload.set_input_files(app["resume path"])
+            app['_uploaded_resume'] = app['resume path']
             modal = application_modal(modal.page)
-    for field in modal.evaluate(COLLECT):
-        answer = answer_for(field["label"], app, answers, field["kind"])
-        if answer is None:
-            continue
-        element = modal.locator(f'[data-li-field="{field["id"]}"]')
-        kind = field["kind"]
-        if kind in ("select-one", "select-multiple", "radio"):
-            option = next((i for i, value in enumerate(field["options"]) if normalize(value) == normalize(answer)), None)
-            if option is None:
-                continue
-            if kind == "radio":
-                radio = modal.locator(f'[data-li-option="{field["id"]}:{option}"]')
-                wrapper = radio.locator('xpath=ancestor::*[@role="radio"][1]')
-                if wrapper.count():
-                    wrapper.click()
+    for radio in modal.locator('input[type=radio]').all():
+        label=radio.evaluate("e => e.getAttribute('aria-label') || e.closest('[role=radio]')?.getAttribute('aria-label') || ''")
+        if Path(app['resume path']).name in label and not radio.is_checked():
+            wrapper=radio.locator('xpath=ancestor::*[@role="radio"][1]')
+            if wrapper.count():wrapper.click()
+            else:radio.check()
+    # React can replace every field after a selection. Re-read controls after
+    # each answer rather than keeping transient data attributes across renders.
+    attempted=set()
+    for _ in range(60):
+        modal=application_modal(modal.page)
+        progressed=False
+        for field in modal.evaluate(COLLECT):
+            key=(field['label'],field['kind'])
+            if key in attempted:continue
+            answer=answer_for(field['label'],app,answers,field['kind'])
+            if answer is None:continue
+            element=modal.locator(f'[data-li-field="{field["id"]}"]')
+            kind=field['kind']
+            if kind in ('select-one','select-multiple','radio'):
+                option=next((i for i,value in enumerate(field['options']) if normalize(value)==normalize(answer)),None)
+                if option is None:continue
+                if kind=='radio':
+                    radio=modal.locator(f'[data-li-option="{field["id"]}:{option}"]')
+                    wrapper=radio.locator('xpath=ancestor::*[@role="radio"][1]')
+                    if wrapper.count():wrapper.click()
+                    elif radio.is_visible():radio.check()
+                    else:
+                        label=first_visible(radio.locator('xpath=following-sibling::label'))
+                        if label is None:raise RuntimeError('Radio option needs a visible control')
+                        label.click()
+                else:element.select_option(label=field['options'][option])
+            elif kind=='checkbox':
+                if normalize(answer) not in ('yes','true','checked'):continue
+                if element.is_visible():element.check()
                 else:
-                    radio.check()
-            else:
-                element.select_option(label=field["options"][option])
-        elif kind == "checkbox":
-            if normalize(answer) in ("yes", "true", "checked"):
-                element.check()
-        elif kind != "combobox":
-            if kind == "number" and not re.fullmatch(r"\d+(?:\.\d+)?", answer):
-                continue
-            element.fill(answer)
+                    label=first_visible(element.locator('xpath=following-sibling::label'))
+                    if label is None:raise RuntimeError('Checkbox needs a visible control')
+                    label.click()
+            elif kind!='combobox':
+                if kind=='number' and not re.fullmatch(r'\d+(?:\.\d+)?',answer):continue
+                element.fill(answer)
+            else:continue
+            attempted.add(key)
+            progressed=True
+            break
+        if not progressed:break
 
 
 def stop_reason(page):
@@ -429,6 +520,8 @@ def apply_job(page, app, answers=None, before_submit=None, confirmation_timeout=
             modal = application_modal(page)
             problems = modal.evaluate(VALIDATE)
             if problems:
+                if 'Choose a resume' in problems:
+                    log('Resume choice state: '+str(modal.locator('input[type=radio],[role=radio]').evaluate_all("els=>els.map(e=>({label:e.getAttribute('aria-label')||e.closest('[role=radio]')?.getAttribute('aria-label'),checked:e.checked,aria:e.getAttribute('aria-checked')}))")))
                 save_questions(page, modal, problems)
                 return Outcome("Needs You", "Unanswered or invalid: " + "; ".join(problems)[:500])
             submit = first_visible(modal.get_by_role("button", name=re.compile(r"submit application", re.I)))
@@ -596,6 +689,9 @@ def run_linkedin_bot(args, app, answers):
                     job = None
                 if not job or not job["Job_Title"] or not job["Company"]:
                     log(f"Skipping {jid}: could not verify job details")
+                    continue
+                if 'impactsure' in re.sub(r'[^a-z0-9]', '', job['Company'].lower()):
+                    log(f'Skipping {jid}: excluded current employer Impactsure')
                     continue
                 actual_workplace = job.pop("workplace", "")
                 if not location_matches(job["Location"], args.location) or (args.workplace != "any" and actual_workplace.lower() != args.workplace):

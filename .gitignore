@@ -55,3 +55,13 @@ linkedin_answers.json
 .dashboard-publish.lock
 .linkedin-questions/
 vercel_site/.tracker-*.tmp
+
+.tailored-applications/
+
+.pdf-deps/
+
+.venv/
+
+output/
+
+tmp/
