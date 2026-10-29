@@ -209,3 +209,9 @@ systemctl --user enable --now job-reply-monitor.service
 The dashboard polls the tracker every five seconds, keeps unconfirmed applications out of the Applied count, and displays a connection warning if updates fail. Hosted copies read the canonical tracker on GitHub; local copies read the local CSV.
 
 `python3 publish_dashboard.py --watch` publishes tracker changes and synchronizes the deployment snapshot. The watcher stages only the two tracker CSV files, preserving unrelated code edits. It needs a working GitHub push login and an awake, online computer. The local dashboard runs as `job-dashboard-live.service`; a failed GitHub login leaves the local dashboard live but prevents public updates.
+
+### Public dashboard updates
+
+GitHub Pages reads `job_applications.csv` from `main`. The local dashboard reads the full private tracker. `publish_dashboard.py --watch` checks the private tracker every 10 seconds and publishes a minimized public snapshot from a separate generated `.dashboard-sync/repo` checkout. It retains application statuses, companies, roles, job links, advertised pay and perks; it removes contact email, expected salary, resume paths, screening answers and free-form notes. Only confirmed `Applied` rows count as completed.
+
+For ongoing updates, configure a repository-only SSH write deploy key at `.dashboard-sync/id_ed25519` and verified GitHub host keys at `.dashboard-sync/known_hosts`, then run `./setup_dashboard_sync.sh`. No access token is stored by the publisher. The user service runs while this computer is on and the user service manager is running, and retries failed updates. Inspect it with `systemctl --user status job-dashboard-publish.service` or `journalctl --user -u job-dashboard-publish.service`. The publisher never pulls, rebases or pushes the private workspace history.

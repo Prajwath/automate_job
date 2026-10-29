@@ -65,3 +65,4 @@ vercel_site/.tracker-*.tmp
 output/
 
 tmp/
+.dashboard-sync/

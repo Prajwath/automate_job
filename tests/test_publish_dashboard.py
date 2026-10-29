@@ -1,40 +1,88 @@
-import contextlib
+import csv
 import io
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import patch
 
 import publish_dashboard as publisher
 
 
 class PublisherTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory()
+        self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name)
-        self.tracker=self.root/'job_applications.csv'
-        self.snapshot=self.root/'vercel_site/job_applications.csv'
-        self.snapshot.parent.mkdir()
-        self.tracker.write_text('Application_ID,Status\n1,Applied\n')
-        self.patches=patch.multiple(publisher,ROOT=self.root,TRACKER=self.tracker,SNAPSHOT=self.snapshot)
-        self.patches.start();self.addCleanup(self.patches.stop)
+        self.root = Path(self.temp.name)
+        self.source = self.root / 'private/job_applications.csv'
+        self.source.parent.mkdir()
+        self.source.write_text('Application_ID,Company,Job_Title,Status,Sender_Email,Notes,Resume_File,Target_CTC\n1,Example,Engineer,Applied,private@example.com,Phone 1234567890,/private/resume.pdf,12 LPA\n')
 
-    def test_publishes_only_tracker_files_and_mirrors_exact_bytes(self):
-        def git(*args):
-            return subprocess.CompletedProcess(args,0,' M job_applications.csv\n' if args[0]=='status' else '','')
-        with patch.object(publisher,'git',side_effect=git) as run, contextlib.redirect_stdout(io.StringIO()):
-            publisher.publish()
-        self.assertEqual(self.snapshot.read_bytes(),self.tracker.read_bytes())
-        self.assertIn(('add','--',*publisher.PATHS),[c.args for c in run.call_args_list])
-        self.assertIn(('push','origin','HEAD:main'),[c.args for c in run.call_args_list])
-        commit=next(c.args for c in run.call_args_list if c.args[0]=='commit')
-        self.assertEqual(commit[-2:],tuple(publisher.PATHS))
+    def git(self, repo, *args):
+        return publisher.git(repo, *args).stdout.strip()
 
-    def test_authentication_failure_is_reported_not_claimed_published(self):
-        def git(*args):
-            return subprocess.CompletedProcess(args,128 if args[0]=='push' else 0,'','Authentication required' if args[0]=='push' else '')
-        with patch.object(publisher,'git',side_effect=git), self.assertRaisesRegex(RuntimeError,'Authentication required'):
-            publisher.publish()
-        self.assertEqual(self.snapshot.read_bytes(),self.tracker.read_bytes())
+    def origin(self):
+        origin = self.root / 'origin.git'
+        subprocess.run(['git', 'init', '--bare', '--initial-branch=main', str(origin)], check=True, capture_output=True)
+        seed = self.root / 'seed'
+        subprocess.run(['git', 'clone', str(origin), str(seed)], check=True, capture_output=True)
+        self.git(seed, 'config', 'user.name', 'Test')
+        self.git(seed, 'config', 'user.email', 'test@example.com')
+        (seed / 'index.html').write_text('Public dashboard')
+        self.git(seed, 'add', '.')
+        self.git(seed, 'commit', '-m', 'Initial public code')
+        self.git(seed, 'push', 'origin', 'main')
+        return origin, seed
+
+    def test_snapshot_removes_private_fields_and_notes(self):
+        result = publisher.public_snapshot(self.source.read_bytes())
+        row = next(csv.DictReader(io.StringIO(result.decode())))
+        self.assertEqual(row['Status'], 'Applied')
+        for key in ('Sender_Email', 'Resume_File', 'Target_CTC', 'JD_File', 'Tailored_Keywords'):
+            self.assertEqual(row[key], '')
+        self.assertNotIn(b'1234567890', result)
+        self.assertNotIn(b'private@', result)
+        self.assertEqual(publisher.public_snapshot(result), result)
+
+    def test_separate_checkout_publishes_and_preserves_remote_code(self):
+        origin, seed = self.origin()
+        cache = self.root / 'cache'
+        before = self.source.read_bytes()
+        publisher.publish(self.source, cache, str(origin))
+        self.assertEqual(self.source.read_bytes(), before)
+        self.assertEqual(set(self.git(cache, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').splitlines()), set(publisher.PATHS))
+        self.assertEqual((cache / publisher.PATHS[0]).read_bytes(), publisher.public_snapshot(before))
+        self.git(seed, 'pull', '--ff-only')
+        (seed / 'index.html').write_text('New public code')
+        self.git(seed, 'commit', '-am', 'Update code')
+        self.git(seed, 'push', 'origin', 'main')
+        self.source.write_bytes(before.replace(b'Applied', b'Needs You'))
+        publisher.publish(self.source, cache, str(origin))
+        self.assertEqual((cache / 'index.html').read_text(), 'New public code')
+        self.assertIn(b'Needs You', (cache / publisher.PATHS[1]).read_bytes())
+        head = self.git(cache, 'rev-parse', 'HEAD')
+        publisher.publish(self.source, cache, str(origin))
+        self.assertEqual(head, self.git(cache, 'rev-parse', 'HEAD'))
+
+    def test_refuses_private_workspace(self):
+        with self.assertRaisesRegex(RuntimeError, 'separate'):
+            publisher.publish(self.source, self.source.parent)
+
+    def test_refuses_unrelated_pending_history(self):
+        origin, _ = self.origin()
+        cache = self.root / 'cache'
+        publisher.publish(self.source, cache, str(origin))
+        (cache / 'secret.txt').write_text('private')
+        self.git(cache, 'add', 'secret.txt')
+        self.git(cache, 'commit', '-m', 'Private change')
+        with self.assertRaisesRegex(RuntimeError, 'unrelated local history'):
+            publisher.publish(self.source, cache, str(origin))
+        self.assertEqual(self.git(origin, 'log', '-1', '--format=%s'), 'Sync public dashboard statuses')
+
+    def test_refuses_private_csv_pending_history(self):
+        origin, _ = self.origin()
+        cache = self.root / 'cache'
+        publisher.publish(self.source, cache, str(origin))
+        (cache / publisher.PATHS[0]).write_bytes(self.source.read_bytes())
+        self.git(cache, 'commit', '-am', 'Unsafe snapshot')
+        with self.assertRaisesRegex(RuntimeError, 'private fields'):
+            publisher.publish(self.source, cache, str(origin))
